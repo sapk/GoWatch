@@ -1,0 +1,21 @@
+{{template "base/head" .}}
+<br><br>
+<div class="container">
+  <div class="ui three column centered grid">
+    <div class="column">
+	<form method="POST" action="/user/login" onsubmit="$(this).find('.animated.button.green').addClass('loading')" class="ui form secondary segment">
+		<div class="required field {{if .AuthLoginError}}error{{end}}">
+			<label>Username</label>
+			<div class="ui icon input"><input name="username" placeholder="username" type="text"><i class="user icon"></i></div>
+		</div>
+		<div class="required field {{if .AuthLoginError}}error{{end}}">
+			<label>Password</label>
+			<div class="ui icon input"><input name="password" placeholder="password" type="password"><i class="lock icon"></i></div>
+		</div>
+		<input style="display:none;" type="submit">
+		<div onclick="$(this).addClass('loading').parent().submit();" class="ui animated button green right floated"><div class="visible content">Valider</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
+	</form>
+	</div>
+  </div>
+</div>
+{{template "base/footer" .}}

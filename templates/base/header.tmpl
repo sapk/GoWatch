@@ -1,5 +1,13 @@
 <header class="ui header menu blue inverted fixed">
 	<div class="container">
-		<a href="/" class="title item"><img src="img/logo-header.svg" ><b>GoWatch</b></a>
+		<a href="/" class="title item"><img src="/img/logo-header.svg" ><b>GoWatch</b></a>
+		<div class="right menu">
+		{{if .user}}
+			<a href="/admin" title="Administration" class="item"><i class="icon alternate cogs"></i></a>
+			<a href="/user" class="item"><i class="icon alternate user"></i>{{.user.Username}}</a>
+		{{else}}
+			<a href="/user/login" class="item">Login</a>
+		{{end}}
+		</div>
 	</div>	
 </header>

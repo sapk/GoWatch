@@ -2,7 +2,18 @@
     width: 1024px;
     margin: 0px auto;
 }
+body {
+	padding-top: 42px;
+}
 body>header img {
     height: 28px;
     margin: -6px 4px;
+}
+
+body>header.menu .title b {
+	font-size: 1.2em;
+}
+
+body>header.menu .item {
+    height: 40px;
 }
