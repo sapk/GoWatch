@@ -1,6 +1,6 @@
-# GoWatch
+# GoWatch [![Build Status](https://travis-ci.org/sapk/GoWatch.svg?branch=master)](https://travis-ci.org/sapk/GoWatch)
 Simple network visualizer
-
+##### Still under development
 ## Goals
 - [ ] Analyze Network Unit 
 - [ ] SNMP collector
