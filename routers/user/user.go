@@ -1,7 +1,7 @@
 package user
 
 import (
-	//"./../../modules/auth"
+	//"github.com/sapk/GoWatch/modules/auth"
 	"github.com/Unknwon/macaron"
 	//"github.com/macaron-contrib/session"
 )

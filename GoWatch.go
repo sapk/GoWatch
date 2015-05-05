@@ -1,15 +1,15 @@
 package main
 
 import (
-	"./modules/auth"
-	"./modules/db"
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/sapk/GoWatch/modules/auth"
+	"github.com/sapk/GoWatch/modules/db"
 	//"golang.org/x/crypto/bcrypt"
-	"./routers"
-	"./routers/admin"
-	"./routers/user"
+	"github.com/sapk/GoWatch/routers"
+	"github.com/sapk/GoWatch/routers/admin"
+	"github.com/sapk/GoWatch/routers/user"
 	"log"
 )
 

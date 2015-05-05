@@ -2,11 +2,11 @@
 package auth
 
 import (
-	"./../db"
 	"github.com/Unknwon/macaron"
 	"github.com/astaxie/beego/orm"
 	"github.com/macaron-contrib/session"
 	"github.com/mikespook/gorbac"
+	"github.com/sapk/GoWatch/modules/db"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	//"net/http"
@@ -77,8 +77,8 @@ func (this *Auth) IsLogged(ctx *macaron.Context, sess session.Store) {
 	}
 	log.Printf("rbac : %v", this.rbac.Get("master"))
 	//TODO
-	rbac.IsGranted(sess.Get("user"), "page.article", nil)
-	ctx.Data["user"] = sess.Get("user")
+	this.rbac.IsGranted(sess.Get("user").(string), "page.article", nil)
+	ctx.Data["user"] = sess.Get("user").(string)
 	ctx.Next()
 }
 
