@@ -32,25 +32,27 @@ func main() {
 
 	//m.Map(auth.New(d))
 	//TODO define auth as a middleware
-	authentificator := auth.New(d)
-	m.Map(authentificator)
-	//m.Use(authentificator.PermissionHandler)
+	//authentificator := auth.New(d)
+	//m.Map(authentificator)
+	m.Use(auth.Authentificator(auth.Options{
+		Provider: d,
+	}))
 	log.Println("Auth initialised !")
 
 	m.Use(macaron.Recovery())
 
-	m.Get("/", authentificator.IsLogged, routers.Index)
+	m.Get("/", auth.IsLogged, routers.Index)
 
 	m.Group("/user", func() {
-		m.Get("/", authentificator.IsLogged, user.CurrentPage)
+		m.Get("/", auth.IsLogged, user.CurrentPage)
 		m.Get("/login", user.Login)
-		m.Post("/login", authentificator.SignIn)
+		m.Post("/login", auth.SignIn)
 	})
 
 	m.Group("/admin", func() {
-		m.Get("/", authentificator.IsLogged, admin.Dashboard)
-		m.Get("/users", authentificator.IsLogged, admin.Users)
-		m.Get("/observeds", authentificator.IsLogged, admin.Observeds)
+		m.Get("/", auth.IsLogged, admin.Dashboard)
+		m.Get("/users", auth.IsLogged, admin.Users)
+		m.Get("/observeds", auth.IsLogged, admin.Observeds)
 	})
 	m.Run()
 }
