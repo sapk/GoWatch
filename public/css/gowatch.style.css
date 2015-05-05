@@ -17,3 +17,7 @@ body>header.menu .title b {
 body>header.menu .item {
     height: 40px;
 }
+ 
+body>header.menu .dropdown.item a {
+    color: #FFF;
+}

@@ -4,10 +4,10 @@
 		  </a>
 		  <a class="{{if .admin_users}}active teal{{end}} item" href="/admin/users">
 		    Users
-		    <div class="ui label">X</div>
+		    <div class="ui label">{{ .users_count }}</div>
 		  </a>
-		  <a class="{{if .admin_observeds}}active teal{{end}} item" href="/admin/observeds">
-		    Observed
+		  <a class="{{if .admin_equipements}}active teal{{end}} item" href="/admin/equipements">
+		    Equipements
 		    <div class="ui label">X</div>
 		  </a>
 		</div>

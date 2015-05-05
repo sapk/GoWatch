@@ -7,8 +7,8 @@ import (
 	"github.com/sapk/GoWatch/modules/db"
 )
 
-func Users(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
-	if !auth.IsGranted("admin.users", sess) {
+func Equipements(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
+	if !auth.IsGranted("admin.equipements", sess) {
 		ctx.Data["message_categorie"] = "negative"
 		ctx.Data["message_icon"] = "warning sign"
 		ctx.Data["message_header"] = "Access forbidden"
@@ -17,6 +17,6 @@ func Users(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db)
 		return
 	}
 	ctx.Data["users_count"] = db.NbUsers()
-	ctx.Data["admin_users"] = true
-	ctx.HTML(200, "admin/users")
+	ctx.Data["admin_equipements"] = true
+	ctx.HTML(200, "admin/equipements")
 }

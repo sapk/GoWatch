@@ -2,7 +2,7 @@
 package auth
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"github.com/Unknwon/macaron"
 	"github.com/astaxie/beego/orm"
 	"github.com/macaron-contrib/session"
@@ -10,7 +10,6 @@ import (
 	"github.com/sapk/GoWatch/modules/db"
 	"golang.org/x/crypto/bcrypt"
 	"log"
-	//"net/http"
 )
 
 func prepareOptions(options []Options) Options {
@@ -37,26 +36,31 @@ func Authentificator(options ...Options) macaron.Handler {
 	auth := New(opt.Provider)
 	return func(ctx *macaron.Context, sess session.Store) {
 		ctx.Map(auth)
+		//log.Printf("Uri : %v", ctx.Req.RequestURI != "/install")
+		//log.Printf("Containmaster : %v", (*auth.db).ContainMaster())
+		//TODO used a var in config
+		if !((*auth.db).ContainMaster()) && ctx.Req.RequestURI != "/install" {
+			ctx.Redirect("/install")
+			return
+			//(*auth.db).CreateUser("master", "0000", "master", "master@localhost")
+		}
+		if sess.Get("uid") != nil {
+			ctx.Data["user"] = sess.Get("user").(db.User)
+			ctx.Data["role"] = auth.rbac.Get(sess.Get("user").(db.User).Roles)
+		}
 	}
 }
 func New(db *db.Db) *Auth {
 	return &Auth{
 		db:   db,
-		rbac: initRbac(db),
+		rbac: initRbac(),
 	}
 }
 
-func initRbac(db *db.Db) *gorbac.Rbac {
-	//Roles //TODO
-	rbac := gorbac.New()
-	rbac.Set("user", []string{"open.equipement"}, nil)
-	rbac.Add("user", []string{"open.dashboard"}, nil)
-	rbac.Set("admin", []string{"add.equipement", "del.equipement", "add.user", "del.user", "admin.dashboard"}, []string{"user"})
-	rbac.Set("master", []string{}, []string{"admin"})
-	return rbac
+func LogOut(ctx *macaron.Context, sess session.Store) {
+	sess.Flush()
+	ctx.Redirect("/")
 }
-
-//TODO
 func SignIn(ctx *macaron.Context, sess session.Store, auth *Auth) {
 
 	o := auth.db.Orm
@@ -92,32 +96,30 @@ func SignIn(ctx *macaron.Context, sess session.Store, auth *Auth) {
 	ctx.HTML(200, "user/login")
 }
 
-//TODO
 func IsLogged(ctx *macaron.Context, sess session.Store, auth *Auth) {
 	if sess.Get("uid") == nil {
 		sess.Set("auth.redirect_after_login", ctx.Req.RequestURI)
 		ctx.Redirect("/user/login")
 		return
 	}
-	log.Printf("rbac : %v", auth.rbac.Get("master"))
-	//TODO
-	//	auth.rbac.IsGranted(sess.Get("user").(string), "page.article", nil)
-	ctx.Data["user"] = sess.Get("user").(db.User)
 	ctx.Next()
 }
 
-//TODO
 func (this *Auth) IsGranted(action string, sess session.Store) bool {
 	return IsGranted(action, sess, this)
 }
+
 func IsGranted(action string, sess session.Store, auth *Auth) bool {
-	var roles []interface{}
-	json.Unmarshal([]byte(sess.Get("user").(db.User).Roles), roles)
-	//
-	for _, role := range roles {
-		if auth.rbac.IsGranted(role.(string), action, nil) {
-			return true
+	/*
+		var roles []interface{}
+		json.Unmarshal([]byte(sess.Get("user").(db.User).Roles), roles)
+		//
+		for _, role := range roles {
+			if auth.rbac.IsGranted(role.(string), action, nil) {
+				return true
+			}
 		}
-	}
-	return false
+	*/
+	//First only role allowed
+	return auth.rbac.IsGranted(sess.Get("user").(db.User).Roles, action, nil)
 }

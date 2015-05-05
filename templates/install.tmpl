@@ -1,0 +1,36 @@
+{{template "base/head" .}}
+<br><br>
+<div class="container">
+  <div class="ui two column centered grid">
+    <div class="column ">
+		<form method="POST" action="/install" onsubmit="$(this).find('.animated.button.green').addClass('loading')" class="ui form secondary segment">
+			<h2 class="ui header">
+		      <i class="settings icon"></i>
+		      <div class="content">
+		        Installation
+		        <div class="sub header">Create a master user at first running time.</div>
+		      </div>
+		    </h2>
+			<div class="ui divider"></div>
+			{{if .InstallError}}
+				<div class="ui message negative">{{.InstallErrorText}}</div>
+			{{end}}
+			<div class="required field {{if .InstallError}}error{{end}}">
+				<label>Username</label>
+				<div class="ui icon input"><input name="username" placeholder="username" type="text"><i class="user icon"></i></div>
+			</div>
+			<div class="required field {{if .InstallError}}error{{end}}">
+				<label>Password</label>
+				<div class="ui icon input"><input name="password" placeholder="password" type="password"><i class="lock icon"></i></div>
+			</div>
+			<div class="required field {{if .InstallError}}error{{end}}">
+				<label>Email</label>
+				<div class="ui icon input"><input name="email" placeholder="email" type="email"><i class="at icon"></i></div>
+			</div>
+			<input style="display:none;" type="submit">
+			<div onclick="$(this).addClass('loading').parent().submit();" class="ui animated button green right floated"><div class="visible content">Start</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
+		</form>
+	</div>
+  </div>
+</div>
+{{template "base/footer" .}}

@@ -3,8 +3,22 @@
 		<a href="/" class="title item"><img src="/img/logo-header.svg" ><b>GoWatch</b></a>
 		<div class="right menu">
 		{{if .user}}
-			<a href="/admin" title="Administration" class="item"><i class="icon alternate cogs"></i></a>
-			<a href="/user" class="item"><i class="icon alternate user"></i>{{.user.Username}}</a>
+		
+			{{if .role.HasPermission "open.equipement" }}
+				<a href="/equipements" title="Equipements" class="item"><i class="icon cube"></i></a>
+			{{end}}
+			{{if .role.HasPermission "admin.dashboard" }}
+				<a href="/admin" title="Administration" class="item"><i class="icon alternate cogs"></i></a>
+			{{end}}
+		    <div class="ui simple dropdown item">
+		      <div class="text"><i class="icon alternate user"></i>{{.user.Username}}</div>
+		      <i class="dropdown icon"></i>
+		      <div class="menu">
+		        <a href="/user" class="item">My account</a>
+				<div class="ui divider"></div>
+		        <a href="/user/logout" class="item">Logout</a>
+		      </div>
+		    </div>
 		{{else}}
 			<a href="/user/login" class="item">Login</a>
 		{{end}}
