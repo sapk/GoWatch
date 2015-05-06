@@ -16,7 +16,8 @@ func Users(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db)
 		ctx.HTML(403, "other/message")
 		return
 	}
-	ctx.Data["users_count"] = db.NbUsers()
+	ctx.Data["users_count"], ctx.Data["Users"] = db.GetUsers()
+	//ctx.Data["users_count"] = db.NbUsers()
 	ctx.Data["admin_users"] = true
 	ctx.HTML(200, "admin/users")
 }

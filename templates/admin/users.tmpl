@@ -1,11 +1,30 @@
 {{template "base/head" .}}
 <br><br>
-<div class="container">
+<div class="container" id="admin-users">
 <div class="ui grid">
     <div class="four wide column">
 		{{template "admin/menu" .}}
 	</div>
-    <div class="twelve wide column"> Users </div>
+    <div class="twelve wide column"> 
+	
+<div class="ui raised segment">
+		<h3>Users :</h3>
+		{{range .Users}}
+		<div class="ui card">
+		  <div class="content">
+			<div class="header">
+			  <img src="{{.GetGravatar}}" class="ui avatar image">
+			  {{.Username}}
+			</div>
+			<div class="description">
+			  {{.Email}}
+			</div>
+		  </div>
+		</div>
+		{{end}}
+</div>
+
+	 </div>
   </div>
 </div>
 {{template "base/footer" .}}

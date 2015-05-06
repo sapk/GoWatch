@@ -21,3 +21,7 @@ body>header.menu .item {
 body>header.menu .dropdown.item a {
     color: #FFF;
 }
+
+#admin-users .ui.card  {
+    width: 180px;
+}

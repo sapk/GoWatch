@@ -1,11 +1,13 @@
 package db
 
 import (
+	"crypto/md5"
 	"errors"
 	"github.com/astaxie/beego/orm"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -23,6 +25,15 @@ func (this *Db) NbUsers() int64 {
 	cnt, _ := (*this.Orm).QueryTable("user").Count() // SELECT COUNT(*) FROM USER
 	return cnt
 }
+func (this *Db) GetUsers() (int64, []*User) {
+	var users []*User
+	num, err := (*this.Orm).QueryTable("user").Limit(-1).All(&users)
+	for u := range users {
+		log.Printf("Row : %v", u)
+	}
+	log.Printf("Returned Rows Num: %s, %s", num, err)
+	return num, users
+}
 func (this *Db) ContainMaster() bool {
 	user := User{Id: 1}
 
@@ -38,13 +49,13 @@ func (this *Db) ContainMaster() bool {
 	}
 }
 func (this *Db) CreateUser(username, password, email, roles string) error {
-	if ok, _ := regexp.Match("/^[a-z0-9_-]{3,16}$/", []byte(username)); !ok {
+	if ok, _ := regexp.MatchString("[a-z0-9_-]{3,16}", username); !ok {
 		return errors.New("Username invalid !")
 	}
-	if ok, _ := regexp.Match("/^[a-z0-9_-]{6,18}$/", []byte(password)); !ok {
+	if ok, _ := regexp.MatchString("[a-z0-9_-]{6,18}", password); !ok {
 		return errors.New("Password invalid !")
 	}
-	if ok, _ := regexp.Match("/^([a-z0-9_.-]+)@([a-z.-]+).([a-z]{2,6})$/", []byte(email)); !ok {
+	if ok, _ := regexp.MatchString("([a-z0-9_.-]+)@([a-z.-]+).([a-z]{2,6})", email); !ok {
 		return errors.New("Email invalid !")
 	}
 	//TODO check roles adn email regex
@@ -61,6 +72,11 @@ func (this *Db) CreateUser(username, password, email, roles string) error {
 	}
 	log.Printf("User %s created !", username)
 	return nil
+}
+func (user *User) GetGravatar() string {
+	md5 := md5.Sum([]byte(strings.ToLower(strings.Trim(user.Email, " "))))
+	return "http://www.gravatar.com/avatar/" + string(md5[:16])
+	//. md5( strtolower( trim( $email ) ) ) . "?d=" . urlencode( $default ) . "&s=" . $size;
 }
 
 /*
