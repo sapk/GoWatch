@@ -5,23 +5,38 @@
     <div class="four wide column">
 		{{template "admin/menu" .}}
 	</div>
-    <div class="twelve wide column"> 
-	
+    <div class="twelve wide column">	
 <div class="ui raised segment">
+<div class="ui cards four">
 		<h3>Users :</h3>
 		{{range .Users}}
-		<div class="ui card">
-		  <div class="content">
-			<div class="header">
-			  <img src="{{.GetGravatar}}" class="ui avatar image">
-			  {{.Username}}
+		<div class="card">
+		    <div class="image">
+		      <img src="{{.GetGravatar}}">
+		    </div>
+			<div class="content">
+				<div class="header">
+				  {{.Username}}
+				</div>
+				<div class="meta">
+			        <a>{{.Roles}}</a>
+			    </div>
+				<div class="description">
+					{{.Email}}
+				</div>
+			    <div class="extra content">
+			      <span class="right floated">
+			        Joined in {{.Created}}
+			      </span>
+			      <span>
+			        <i class="user icon"></i>
+			        {{.Updated}}
+			      </span>
+			    </div>
 			</div>
-			<div class="description">
-			  {{.Email}}
-			</div>
-		  </div>
 		</div>
 		{{end}}
+</div>
 </div>
 
 	 </div>

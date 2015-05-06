@@ -2,6 +2,7 @@ package db
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"github.com/astaxie/beego/orm"
 	"golang.org/x/crypto/bcrypt"
@@ -75,7 +76,7 @@ func (this *Db) CreateUser(username, password, email, roles string) error {
 }
 func (user *User) GetGravatar() string {
 	md5 := md5.Sum([]byte(strings.ToLower(strings.Trim(user.Email, " "))))
-	return "http://www.gravatar.com/avatar/" + string(md5[:16])
+	return "http://www.gravatar.com/avatar/" + hex.EncodeToString(md5[:16])
 	//. md5( strtolower( trim( $email ) ) ) . "?d=" . urlencode( $default ) . "&s=" . $size;
 }
 
