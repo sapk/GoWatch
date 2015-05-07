@@ -7,8 +7,8 @@
 	</div>
     <div class="twelve wide column">	
 <div class="ui raised segment">
+		<h3>Users :<a class="ui green button compact right floated" href="/admin/user/add"><i class="add user icon"></i> Add</a></h3>
 <div class="ui cards four">
-		<h3>Users :</h3>
 		{{range .Users}}
 		<div class="card">
 		    <div class="image">
@@ -24,15 +24,6 @@
 				<div class="description">
 					{{.Email}}
 				</div>
-			    <div class="extra content">
-			      <span class="right floated">
-			        Joined in {{.Created}}
-			      </span>
-			      <span>
-			        <i class="user icon"></i>
-			        {{.Updated}}
-			      </span>
-			    </div>
 			</div>
 		</div>
 		{{end}}

@@ -47,6 +47,7 @@ func Start(db *db.Db) {
 	m.Group("/admin", func() {
 		m.Get("/", auth.IsLogged, admin.Dashboard)
 		m.Get("/users", auth.IsLogged, admin.Users)
+		m.Get("/user/add", auth.IsLogged, admin.UserAdd)
 		m.Get("/equipements", auth.IsLogged, admin.Equipements)
 	})
 

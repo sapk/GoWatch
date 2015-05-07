@@ -21,3 +21,11 @@ func initRbac() *gorbac.Rbac {
 	rbac.Set("master", []string{}, []string{"admin"})
 	return rbac
 }
+func (this *Auth) GetRoles() []string {
+	roles := this.rbac.Dump()
+	ret := make([]string, 0, len(roles))
+	for role := range roles {
+		ret = append(ret, role)
+	}
+	return ret
+}

@@ -11,7 +11,9 @@ type Db struct {
 
 func InitDb() *Db {
 	orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
-	orm.RegisterDataBase("default", "sqlite3", "gowatch.db")
+	//orm.RegisterDataBase("default", "sqlite3", "gowatch.db")
+	orm.RegisterDataBase("default", "sqlite3", "gowatch.db?cache=shared&mode=memory")
+	//orm.RegisterDataBase("default", "sqlite3", ":memory:")
 
 	orm.RegisterModel(new(User))
 	orm.Debug = true
