@@ -13,6 +13,10 @@ Simple network visualizer
 - [ ] Config Backup & History
 - [ ] Auto-Discovery
 - [ ] Various Network Tools
+- [ ] Organizations
+- [ ] Location/Map
+- [ ] Procedures (custom scripts)
+- 
 
 ## License
 
