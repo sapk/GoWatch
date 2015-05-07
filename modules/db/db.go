@@ -2,13 +2,18 @@ package db
 
 import (
 	"fmt"
+
 	"github.com/astaxie/beego/orm"
 )
 
+//Db represent the database
 type Db struct {
 	Orm *orm.Ormer
 }
 
+var db Db
+
+//InitDb init the database
 func InitDb() *Db {
 	orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
 	//orm.RegisterDataBase("default", "sqlite3", "gowatch.db")
@@ -26,5 +31,6 @@ func InitDb() *Db {
 	if err != nil {
 		fmt.Println(err)
 	}
-	return &Db{Orm: &o}
+	db = Db{Orm: &o}
+	return &db
 }

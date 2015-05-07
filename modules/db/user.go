@@ -57,6 +57,22 @@ func (db *Db) ContainMaster() bool {
 	}
 }
 
+// GetUser return user by param
+func (db *Db) GetUser(user User) (*User, error) {
+	return &user, (*db.Orm).Read(&user)
+}
+
+// DelUser remove the user pass in param
+func (db *Db) DelUser(user *User) error {
+	_, err := (*db.Orm).Delete(user)
+	return err
+}
+
+// Delete remove the user
+func (user *User) Delete() error {
+	return db.DelUser(user)
+}
+
 // CreateUser verify the data and add a user
 func (db *Db) CreateUser(username, password, email, role string, autorizedroles []string) error {
 	if ok, _ := regexp.MatchString("[a-z0-9_-]{3,16}", username); !ok {

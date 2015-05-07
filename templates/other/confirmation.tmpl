@@ -1,0 +1,26 @@
+{{template "base/head" .}}
+<br><br>
+<div class="container">
+  <div class="ui three column centered grid">
+   <div class="column">
+  	<div class="ui icon message {{.message_categorie}}" style="margin-bottom: -2px;">
+      <i class="{{.message_icon}} icon"></i>
+  	  <div class="content">
+  	    <div class="header">
+  	      {{.message_header}}
+  	    </div>
+  	    <p>{{.message_text}}</p>
+  	  </div>
+  	</div>
+    <div class="2 fluid ui buttons bottom attached">
+          <a class="ui button" onclick="window.history.back();">
+              Retour
+          </a>
+          <a class="ui button red right floated" href="?confirm={{.csrf_token}}">
+              Valider
+          </a>
+    </div>
+   </div>
+  </div>
+</div>
+{{template "base/footer" .}}

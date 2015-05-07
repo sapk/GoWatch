@@ -17,9 +17,21 @@ body>header.menu .title b {
 body>header.menu .item {
     height: 40px;
 }
- 
+
 body>header.menu .dropdown.item a {
     color: #FFF;
+}
+
+.card .small.delete-button{
+    padding: 3px;
+    font-size: 65%;
+    margin-top: 4px;
+}
+.card .small.delete-button>.text{
+  display : none;
+}
+.card .small.delete-button:hover>.text{
+  display : inline-block;
 }
 /*
 #admin-users .ui.card  {

@@ -3,7 +3,7 @@ package web
 import (
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3" //used by orm
 	"github.com/sapk/GoWatch/modules/auth"
 	"github.com/sapk/GoWatch/modules/db"
 	//"golang.org/x/crypto/bcrypt"
@@ -12,8 +12,12 @@ import (
 	"github.com/sapk/GoWatch/routers"
 	"github.com/sapk/GoWatch/routers/admin"
 	"github.com/sapk/GoWatch/routers/user"
+
+	"github.com/macaron-contrib/csrf"
+	"github.com/macaron-contrib/toolbox"
 )
 
+//Start init the web interface
 func Start(db *db.Db) {
 
 	m := macaron.New()
@@ -23,6 +27,7 @@ func Start(db *db.Db) {
 	m.Use(macaron.Static("public"))
 	m.Use(macaron.Renderer())
 	m.Use(session.Sessioner())
+	m.Use(csrf.Csrfer())
 	log.Println("Macaron initialised !")
 
 	m.Use(auth.Authentificator(auth.Options{
@@ -31,6 +36,9 @@ func Start(db *db.Db) {
 	log.Println("Auth initialised !")
 
 	m.Use(macaron.Recovery())
+
+	//TODO remove after dev  /debug
+	m.Use(toolbox.Toolboxer(m))
 
 	m.Get("/", routers.Index)
 	m.Get("/install", routers.Install)
@@ -50,6 +58,7 @@ func Start(db *db.Db) {
 		m.Get("/users", auth.IsLogged, admin.Users)
 		m.Get("/user/add", auth.IsLogged, admin.UserAdd)
 		m.Post("/user/add", auth.IsLogged, admin.UserAddPost)
+		m.Get("/user/:id([0-9]+)/del", auth.IsLogged, admin.UserDel)
 		m.Get("/equipements", auth.IsLogged, admin.Equipements)
 	})
 
