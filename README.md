@@ -16,7 +16,7 @@ Simple network visualizer
 - [ ] Organizations
 - [ ] Location/Map
 - [ ] Procedures (custom scripts)
-- 
+- [ ] Equipement Web Console
 
 ## License
 
