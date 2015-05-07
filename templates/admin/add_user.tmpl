@@ -5,10 +5,61 @@
     <div class="four wide column">
 		{{template "admin/menu" .}}
 	</div>
-    <div class="twelve wide column">	
-<div class="ui raised segment">
-		<h3>Add user :</h3>
-</div>
+    <div class="twelve wide column">
+      <div class="ui raised segment">
+        <form method="POST" action="/admin/user/add" onsubmit="$(this).find('.animated.button.green').addClass('loading')" class="ui form">
+          <h2 class="ui header">
+              <i class="add user icon"></i>
+              <div class="content">
+                Add user
+                <div class="sub header">Please enter informations of the user under</div>
+              </div>
+            </h2>
+          <div class="ui divider"></div>
+          {{if .UserAddError}}
+            <div class="ui message negative">{{.UserAddErrorText}}</div>
+          {{end}}
+          <div class="required field {{if .UserAddError}}error{{end}}">
+            <label>Username</label>
+            <div class="ui icon input"><input name="username" placeholder="username" type="text"><i class="user icon"></i></div>
+          </div>
+          <div class="required field {{if .UserAddError}}error{{end}}">
+            <label>Password</label>
+            <div class="ui icon input"><input name="password" placeholder="password" type="password"><i class="lock icon"></i></div>
+          </div>
+          <div class="required field {{if .UserAddError}}error{{end}}">
+            <label>Email</label>
+            <div class="ui icon input"><input name="email" placeholder="email" type="email"><i class="at icon"></i></div>
+          </div>
+          <div class="required field {{if .UserAddError}}error{{end}}">
+            <label>Role</label>
+            <div class="ui fluid search selection dropdown">
+              <input name="role" type="hidden">
+              <i class="dropdown icon"></i>
+              <div class="default text">Select Role</div>
+              <div class="menu">
+              	{{range .roles}}
+                  {{if ne .  "master"}}
+                  <div class="item" data-value="{{.}}">{{.}}</div>
+                  {{end}}
+                {{end}}
+              </div>
+            </div>
+            <script>
+            String.prototype.capitalizeFirstLetter = function() {
+                return this.charAt(0).toUpperCase() + this.slice(1);
+            }
+            $(function(){
+              $('.field .dropdown .item').each(function(){
+                $(this).text($(this).text().capitalizeFirstLetter());
+              });
+              $('.field .dropdown').dropdown({});})
+            </script>
+          </div>
+          <input style="display:none;" type="submit">
+          <div onclick="$(this).addClass('loading').parent().submit();" class="ui animated button green right floated"><div class="visible content">Add</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
+        </form>
+      </div>
 	 </div>
   </div>
 </div>

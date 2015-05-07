@@ -21,6 +21,8 @@ func initRbac() *gorbac.Rbac {
 	rbac.Set("master", []string{}, []string{"admin"})
 	return rbac
 }
+
+//GetRoles return the list of roles defined in this class
 func (this *Auth) GetRoles() []string {
 	roles := this.rbac.Dump()
 	ret := make([]string, 0, len(roles))

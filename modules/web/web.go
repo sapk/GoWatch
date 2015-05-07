@@ -7,10 +7,11 @@ import (
 	"github.com/sapk/GoWatch/modules/auth"
 	"github.com/sapk/GoWatch/modules/db"
 	//"golang.org/x/crypto/bcrypt"
+	"log"
+
 	"github.com/sapk/GoWatch/routers"
 	"github.com/sapk/GoWatch/routers/admin"
 	"github.com/sapk/GoWatch/routers/user"
-	"log"
 )
 
 func Start(db *db.Db) {
@@ -48,6 +49,7 @@ func Start(db *db.Db) {
 		m.Get("/", auth.IsLogged, admin.Dashboard)
 		m.Get("/users", auth.IsLogged, admin.Users)
 		m.Get("/user/add", auth.IsLogged, admin.UserAdd)
+		m.Post("/user/add", auth.IsLogged, admin.UserAddPost)
 		m.Get("/equipements", auth.IsLogged, admin.Equipements)
 	})
 

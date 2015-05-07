@@ -15,4 +15,5 @@
    </div>
   </div>
 </div>
+{{if .message_redirect}}<script>window.setTimeout("window.location.href='{{.message_redirect}}'",5000)</script>{{end}}
 {{template "base/footer" .}}
