@@ -8,7 +8,7 @@
 				<a href="/equipements" title="Equipements" class="item"><i class="icon cubes"></i></a>
 			{{end}}
 			{{if .role.HasPermission "admin.dashboard" }}
-				<a href="/admin" title="Administration" class="item"><i class="icon alternate cogs"></i></a>
+				<a href="/admin" title="Administration" class="item {{if .page_admin}}active{{end}}"><i class="icon alternate cogs"></i></a>
 			{{end}}
 		    <div class="ui simple dropdown item">
 		      <div class="text"><i class="icon alternate user"></i>{{.user.Username}}</div>

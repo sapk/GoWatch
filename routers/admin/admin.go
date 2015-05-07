@@ -19,6 +19,7 @@ func Dashboard(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db
 }
 
 func fillGlobal(ctx *macaron.Context, db *db.Db) {
+	ctx.Data["page_admin"] = true
 	ctx.Data["users_count"] = db.NbUsers()
 	ctx.Data["equipements_count"] = db.NbEquipements()
 }
