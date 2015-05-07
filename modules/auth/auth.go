@@ -3,13 +3,14 @@ package auth
 
 import (
 	//"encoding/json"
+	"log"
+
 	"github.com/Unknwon/macaron"
 	"github.com/astaxie/beego/orm"
 	"github.com/macaron-contrib/session"
 	"github.com/mikespook/gorbac"
 	"github.com/sapk/GoWatch/modules/db"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 )
 
 func prepareOptions(options []Options) Options {
@@ -72,7 +73,7 @@ func SignIn(ctx *macaron.Context, sess session.Store, auth *Auth) {
 	} else if err == orm.ErrMissPK {
 		log.Println("No primary key found in user table.")
 	} else {
-		//fmt.Println(user.Id, user.Username)
+		//fmt.Println(user.ID, user.Username)
 		err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(ctx.Query("password")))
 		if err == bcrypt.ErrMismatchedHashAndPassword {
 			log.Println("Bad password with username %s.", user.Username)
@@ -80,7 +81,7 @@ func SignIn(ctx *macaron.Context, sess session.Store, auth *Auth) {
 			log.Println("Unkwon error")
 		} else {
 			log.Printf("User %s login succesfully.", user.Username)
-			sess.Set("uid", user.Id)
+			sess.Set("uid", user.ID)
 			sess.Set("user", user)
 			//sess.Set("roles", user.Roles)
 			if sess.Get("auth.redirect_after_login") == nil {

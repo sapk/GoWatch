@@ -1,9 +1,10 @@
 package main
 
 import (
+	"log"
+
 	"github.com/sapk/GoWatch/modules/db"
 	"github.com/sapk/GoWatch/modules/web"
-	"log"
 )
 
 func main() {

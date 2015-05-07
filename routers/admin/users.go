@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"errors"
-
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/csrf"
 	"github.com/macaron-contrib/session"
@@ -15,25 +13,13 @@ import (
 	"github.com/sapk/GoWatch/modules/db"
 )
 
-func verificationAuth(ctx *macaron.Context, auth *auth.Auth, sess session.Store) error {
-	ctx.Data["admin_users"] = true
-	if !auth.IsGranted("admin.users", sess) {
-		ctx.Data["message_categorie"] = "negative"
-		ctx.Data["message_icon"] = "warning sign"
-		ctx.Data["message_header"] = "Access forbidden"
-		ctx.Data["message_text"] = "It's seem you don't have the right to be there"
-		ctx.HTML(403, "other/message")
-		return errors.New("Not allowed")
-	}
-	return nil
-}
-
 // Users generate the admin page for users management
 func Users(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
 	if err := verificationAuth(ctx, auth, sess); err != nil {
 		return
 	}
-
+	fillGlobal(ctx, db)
+	ctx.Data["admin_users"] = true
 	ctx.Data["users_count"], ctx.Data["Users"] = db.GetUsers()
 	ctx.HTML(200, "admin/users")
 }
@@ -44,7 +30,7 @@ func UserDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.
 		return
 	}
 	id, _ := strconv.ParseUint(ctx.Params(":id"), 10, 64)
-	user, err := dbb.GetUser(db.User{Id: id})
+	user, err := dbb.GetUser(db.User{ID: id})
 	if err != nil {
 		ctx.Data["message_categorie"] = "negative"
 		ctx.Data["message_icon"] = "user"
@@ -52,7 +38,7 @@ func UserDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.
 		ctx.Data["message_text"] = "The user seems to not be in the database"
 		ctx.Data["message_redirect"] = "/admin/users"
 		ctx.HTML(200, "other/message")
-	} else if user.Id == 1 {
+	} else if user.ID == 1 {
 		ctx.Data["message_categorie"] = "negative"
 		ctx.Data["message_icon"] = "user"
 		ctx.Data["message_header"] = "User is master !"
@@ -65,13 +51,13 @@ func UserDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.
 		ctx.Data["message_icon"] = "user"
 		ctx.Data["message_header"] = "Confirm user deletion!"
 		ctx.Data["csrf_token"] = x.GetToken()
-		sess.Set("crsf_user_id", user.Id)
+		sess.Set("crsf_user_id", user.ID)
 		ctx.Data["message_text"] = strings.Join([]string{"Do you really want to delete : ", user.Username}, " ")
 
 		ctx.HTML(200, "other/confirmation")
 	} else {
 		// We del the user if all is good
-		if sess.Get("crsf_user_id") != user.Id {
+		if sess.Get("crsf_user_id") != user.ID {
 			ctx.Data["message_categorie"] = "negative"
 			ctx.Data["message_icon"] = "user"
 			ctx.Data["message_header"] = "Hummm ..."
@@ -106,7 +92,8 @@ func UserAdd(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.D
 	if err := verificationAuth(ctx, auth, sess); err != nil {
 		return
 	}
-	ctx.Data["users_count"] = db.NbUsers()
+	fillGlobal(ctx, db)
+	ctx.Data["admin_users"] = true
 	ctx.Data["roles"] = auth.GetRoles()
 	ctx.HTML(200, "admin/add_user")
 }
@@ -119,10 +106,11 @@ func UserAddPost(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *
 	err := db.CreateUser(ctx.Query("username"), ctx.Query("password"), ctx.Query("email"), ctx.Query("role"), auth.GetRoles())
 	if err != nil {
 		log.Println("User add failed !")
-		ctx.Data["users_count"] = db.NbUsers()
+		fillGlobal(ctx, db)
 		ctx.Data["roles"] = auth.GetRoles()
 		ctx.Data["UserAddError"] = true
 		ctx.Data["UserAddErrorText"] = err.Error()
+		ctx.Data["admin_users"] = true
 		ctx.HTML(200, "admin/add_user")
 		return
 	}

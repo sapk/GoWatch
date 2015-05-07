@@ -8,15 +8,11 @@ import (
 )
 
 func Equipements(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
-	if !auth.IsGranted("admin.equipements", sess) {
-		ctx.Data["message_categorie"] = "negative"
-		ctx.Data["message_icon"] = "warning sign"
-		ctx.Data["message_header"] = "Access forbidden"
-		ctx.Data["message_text"] = "It's seem you don't have the right to be there"
-		ctx.HTML(403, "other/message")
+
+	if err := verificationAuth(ctx, auth, sess); err != nil {
 		return
 	}
-	ctx.Data["users_count"] = db.NbUsers()
+	fillGlobal(ctx, db)
 	ctx.Data["admin_equipements"] = true
 	ctx.HTML(200, "admin/equipements")
 }

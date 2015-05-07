@@ -3,9 +3,9 @@
 		<a href="/" class="title item"><img src="/img/logo-header.svg" ><b>GoWatch</b></a>
 		<div class="right menu">
 		{{if .user}}
-		
+
 			{{if .role.HasPermission "open.equipement" }}
-				<a href="/equipements" title="Equipements" class="item"><i class="icon cube"></i></a>
+				<a href="/equipements" title="Equipements" class="item"><i class="icon cubes"></i></a>
 			{{end}}
 			{{if .role.HasPermission "admin.dashboard" }}
 				<a href="/admin" title="Administration" class="item"><i class="icon alternate cogs"></i></a>
@@ -23,5 +23,5 @@
 			<a href="/user/login" class="item">Login</a>
 		{{end}}
 		</div>
-	</div>	
+	</div>
 </header>

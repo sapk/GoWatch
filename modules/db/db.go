@@ -21,6 +21,7 @@ func InitDb() *Db {
 	//orm.RegisterDataBase("default", "sqlite3", ":memory:")
 
 	orm.RegisterModel(new(User))
+	orm.RegisterModel(new(Equipement))
 	orm.Debug = true
 
 	o := orm.NewOrm()

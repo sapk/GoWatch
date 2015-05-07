@@ -1,11 +1,17 @@
 {{template "base/head" .}}
 <br><br>
-<div class="container">
+<div class="container" id="admin-users">
 <div class="ui grid">
     <div class="four wide column">
 		{{template "admin/menu" .}}
 	</div>
-    <div class="twelve wide column"> Equipements </div>
+    <div class="twelve wide column">
+<div class="ui raised segment">
+		<h3>Equipements :<a class="ui green button compact right floated" href="/admin/equipement/add"><i class="cube icon"></i> Add</a></h3>
+    <div class="ui cards four">
+    </div>
+</div>
+	 </div>
   </div>
 </div>
 {{template "base/footer" .}}

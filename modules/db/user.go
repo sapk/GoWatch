@@ -15,7 +15,7 @@ import (
 
 // User describe a user in database
 type User struct {
-	Id       uint64 `orm:"auto;pk"`
+	ID       uint64 `orm:"auto;pk"`
 	Username string `orm:"unique"`
 	Password string
 	Roles    string
@@ -34,16 +34,13 @@ func (db *Db) NbUsers() int64 {
 func (db *Db) GetUsers() (int64, []*User) {
 	var users []*User
 	num, err := (*db.Orm).QueryTable("user").Limit(-1).All(&users)
-	for u := range users {
-		log.Printf("Row : %v", u)
-	}
 	log.Printf("Returned Rows Num: %s, %s", num, err)
 	return num, users
 }
 
 //ContainMaster verifiy if the master is in db (init)
 func (db *Db) ContainMaster() bool {
-	user := User{Id: 1}
+	user := User{ID: 1}
 
 	err := (*db.Orm).Read(&user)
 
