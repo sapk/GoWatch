@@ -33,6 +33,15 @@ body>header.menu .dropdown.item a {
 .card .small.delete-button:hover>.text{
   display : inline-block;
 }
+
+.form .field.success,.form  .field.success>label,.form .field.success .icon{
+  color : #5BBD72;
+}
+
+.form .field.success input{
+  border-color : #5BBD72;
+  background-color : rgba(91,189,114,0.1);
+}
 /*
 #admin-users .ui.card  {
     width: 180px;

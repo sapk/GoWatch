@@ -18,8 +18,7 @@ func Users(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db)
 	if err := verificationAuth(ctx, auth, sess); err != nil {
 		return
 	}
-	fillGlobal(ctx, db)
-	ctx.Data["admin_users"] = true
+	fillGlobalPage(ctx, db, "admin_users")
 	ctx.Data["users_count"], ctx.Data["Users"] = db.GetUsers()
 	ctx.HTML(200, "admin/users")
 }
@@ -92,8 +91,7 @@ func UserAdd(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.D
 	if err := verificationAuth(ctx, auth, sess); err != nil {
 		return
 	}
-	fillGlobal(ctx, db)
-	ctx.Data["admin_users"] = true
+	fillGlobalPage(ctx, db, "admin_users")
 	ctx.Data["roles"] = auth.GetRoles()
 	ctx.HTML(200, "admin/add_user")
 }
@@ -106,11 +104,10 @@ func UserAddPost(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *
 	err := db.CreateUser(ctx.Query("username"), ctx.Query("password"), ctx.Query("email"), ctx.Query("role"), auth.GetRoles())
 	if err != nil {
 		log.Println("User add failed !")
-		fillGlobal(ctx, db)
+		fillGlobalPage(ctx, db, "admin_users")
 		ctx.Data["roles"] = auth.GetRoles()
 		ctx.Data["UserAddError"] = true
 		ctx.Data["UserAddErrorText"] = err.Error()
-		ctx.Data["admin_users"] = true
 		ctx.HTML(200, "admin/add_user")
 		return
 	}

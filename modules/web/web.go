@@ -60,6 +60,9 @@ func Start(db *db.Db) {
 		m.Post("/user/add", auth.IsLogged, admin.UserAddPost)
 		m.Get("/user/:id([0-9]+)/del", auth.IsLogged, admin.UserDel)
 		m.Get("/equipements", auth.IsLogged, admin.Equipements)
+		m.Get("/equipement/add", auth.IsLogged, admin.EquipementAdd)
+		m.Post("/equipement/add", auth.IsLogged, admin.EquipementAddPost)
+		m.Get("/equipement/:id([0-9]+)/del", auth.IsLogged, admin.EquipementDel)
 	})
 
 	m.Run()

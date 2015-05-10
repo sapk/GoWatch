@@ -1,0 +1,72 @@
+{{template "base/head" .}}
+<br><br>
+<div class="container" id="admin-users">
+<div class="ui grid">
+    <div class="four wide column">
+		{{template "admin/menu" .}}
+	</div>
+    <div class="twelve wide column">
+      <div class="ui raised segment">
+        <form method="POST" action="/admin/equipement/add" onsubmit="$(this).find('.animated.button.green').addClass('loading')" class="ui form">
+          <h2 class="ui header">
+              <i class="add square icon"></i>
+              <div class="content">
+                Add equipement
+                <div class="sub header">Please enter the IP or Hostname use for administration. (must be unique)</div>
+              </div>
+            </h2>
+          <div class="ui divider"></div>
+          {{if .EquipementAddError}}
+            <div class="ui message negative">{{.EquipementAddErrorText}}</div>
+          {{end}}
+          <div class="required field {{if .EquipementAddError}}error{{end}}">
+            <label>IP/Hostname</label>
+            <div class="ui icon input"><input name="iporhostname" placeholder="192.168.0.1" type="text"><i class="cube icon"></i></div>
+          </div>
+          <div class="required field {{if .EquipementAddError}}error{{end}}" style="display:none;">
+            <label>Type</label>
+            <div class="ui fluid search selection dropdown">
+              <input name="type" type="hidden">
+              <i class="dropdown icon"></i>
+              <div class="default text">Select type</div>
+              <div class="menu">
+              	{{range .types}}
+                  <div class="item" data-value="{{.}}">{{.}}</div>
+                {{end}}
+              </div>
+            </div>
+            <script>
+            $(function(){$('.field .dropdown').dropdown({});})
+            </script>
+          </div>
+          <input style="display:none;" type="submit">
+          <div onclick="$(this).addClass('loading').parent().submit();" class="ui animated button green right floated"><div class="visible content">Add</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
+          <script>
+          $(function(){
+              var match = {
+                ipv4 : "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$",
+                ipv6 : "^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?$",
+                hostname : "^((?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?)$"
+              }
+              match.all =  new RegExp("("+match.ipv4+")|("+match.ipv6+")|("+match.hostname+")");
+            $("input[name='iporhostname']").on('keyup', function(){
+                $(this).parent().addClass('loading');
+                var iporhostname = $(this).val().trim()
+                console.log(iporhostname + ":" + match.all.test(iporhostname))
+                if(match.all.test(iporhostname)){
+                  $(this).parent().parent().removeClass("error").addClass("success")
+                  $("input[name='type']").parent().parent().show();
+                }else {
+                  $(this).parent().parent().addClass("error").removeClass("success")
+                  $("input[name='type']").parent().parent().hide();
+                }
+                $(this).parent().removeClass('loading');
+            });
+          })
+          </script>
+        </form>
+      </div>
+	 </div>
+  </div>
+</div>
+{{template "base/footer" .}}

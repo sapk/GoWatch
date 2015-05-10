@@ -9,17 +9,20 @@ import (
 	"github.com/sapk/GoWatch/modules/db"
 )
 
+// Dashboard genrate the home admin page
 func Dashboard(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
 	if err := verificationAuth(ctx, auth, sess); err != nil {
 		return
 	}
-	fillGlobal(ctx, db)
-	ctx.Data["admin_dashboard"] = true
+	fillGlobalPage(ctx, db, "admin_dashboard")
 	ctx.HTML(200, "admin/dashboard")
 }
 
-func fillGlobal(ctx *macaron.Context, db *db.Db) {
+func fillGlobalPage(ctx *macaron.Context, db *db.Db, page string) {
 	ctx.Data["page_admin"] = true
+	if page != "" {
+		ctx.Data[page] = true
+	}
 	ctx.Data["users_count"] = db.NbUsers()
 	ctx.Data["equipements_count"] = db.NbEquipements()
 }

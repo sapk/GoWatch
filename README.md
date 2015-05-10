@@ -2,7 +2,7 @@
 Simple network visualizer
 ##### Still under development
 ## [Goals](https://github.com/sapk/GoWatch/wiki/Detailled-goals)
-- [ ] Analyze Network Unit 
+- [ ] Analyze Network Unit
 - [ ] SNMP collector
 - [ ] Network Graphing
 - [ ] Network Monitoring
@@ -18,6 +18,19 @@ Simple network visualizer
 - [ ] Procedures (custom scripts)
 - [ ] Equipement Web Console
 
+For optimization there is two types of analysis :
+  - Short ( very simple stats can be run in paralell)
+    - Ping
+    - SNMP Trap
+    - ...
+  - Long (Need more analysis so for less consumption need to be run sequentially (maybe 2-3 paralell can be changed in config))
+    - SNMP
+    - Log scan
+    - Port scanning
+    - Bandwith stats
+    - ...
+
+The admin dashboard show the medium interval between each scan of each type.
 ## License
 
 This project is under the MIT License. See the [LICENSE](https://github.com/sapk/GoWatch/blob/master/LICENSE) file for the full license text.
