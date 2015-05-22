@@ -3,6 +3,7 @@ package network
 import (
 	"log"
 	"net"
+	"os"
 	"time"
 
 	"golang.org/x/net/icmp"
@@ -27,7 +28,13 @@ func Ping(ip string) PingResponse {
 	}
 
 	defer c.Close()
-
+	wm := icmp.Message{
+		Type: ipv4.ICMPTypeEcho, Code: 0,
+		Body: &icmp.Echo{
+			ID: os.Getpid() & 0xffff, Seq: 1,
+			Data: []byte("COUCOU"),
+		},
+	}
 	wb, err := wm.Marshal(nil)
 	if err != nil {
 		log.Fatal(err)
@@ -36,21 +43,32 @@ func Ping(ip string) PingResponse {
 		log.Fatalf("WriteTo err, %s", err)
 	}
 
-	rb := make([]byte, 1500)
-	n, peer, err := c.ReadFrom(rb)
-	if err != nil {
-		log.Fatal(err)
+	start := time.Now()
+	//TODO break on timeout
+PingRespLoop:
+	for {
+		rb := make([]byte, 1500)
+
+		n, peer, err := c.ReadFrom(rb)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rm, err := icmp.ParseMessage(iana.ProtocolICMP, rb[:n])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		switch rm.Type {
+		case ipv4.ICMPTypeEchoReply:
+			log.Printf("got reflection from %v", peer)
+			if peer.String() == ip {
+				break PingRespLoop
+			}
+		default:
+			log.Printf("got %+v; want echo reply", rm)
+		}
 	}
-	rm, err := icmp.ParseMessage(iana.ProtocolICMP, rb[:n])
-	if err != nil {
-		log.Fatal(err)
-	}
-	switch rm.Type {
-	case ipv4.ICMPTypeEchoReply:
-		log.Printf("got reflection from %v", peer)
-	default:
-		log.Printf("got %+v; want echo reply", rm)
-	}
-	//TODO
-	return PingResponse{IP: ip, Result: true, Time: 0}
+
+	return PingResponse{IP: ip, Result: true, Time: time.Since(start)}
 }

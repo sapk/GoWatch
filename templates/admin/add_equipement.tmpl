@@ -19,7 +19,7 @@
           {{if .EquipementAddError}}
             <div class="ui message negative">{{.EquipementAddErrorText}}</div>
           {{end}}
-          <div class="required field {{if .EquipementAddError}}error{{end}}">
+          <div class="required field {{if .EquipementAddError}}error{{end}}" id="host">
             <label>IP/Hostname</label>
             <div class="ui icon input"><input name="iporhostname" placeholder="192.168.0.1" type="text"><i class="cube icon"></i></div>
           </div>
@@ -39,9 +39,18 @@
             $(function(){$('.field .dropdown').dropdown({});})
             </script>
           </div>
+          <div class="required field {{if .EquipementAddError}}error{{end}}" style="display:none;">
+            <label>SNMP community</label>
+            <div class="ui icon input"><input name="snmp_community" placeholder="public" type="text"><i class="find icon"></i></div>
+          </div>
+          <div class="required field {{if .EquipementAddError}}error{{end}}" style="display:none;">
+            <label>SNMP password</label>
+            <div class="ui icon input"><input name="snmp_password" placeholder="public" type="text"><i class="protect icon"></i></div>
+          </div>
           <input style="display:none;" type="submit">
           <div onclick="$(this).addClass('loading').parent().submit();" class="ui animated button green right floated"><div class="visible content">Add</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
           <script>
+          //TODO add SNMP community+pass
           $(function(){
               var match = {
                 ipv4 : "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$",
@@ -50,15 +59,16 @@
               }
               match.all =  new RegExp("("+match.ipv4+")|("+match.ipv6+")|("+match.hostname+")");
             $("input[name='iporhostname']").on('keyup', function(){
+                //TODO ping the host or SNMP
                 $(this).parent().addClass('loading');
                 var iporhostname = $(this).val().trim()
                 console.log(iporhostname + ":" + match.all.test(iporhostname))
                 if(match.all.test(iporhostname)){
                   $(this).parent().parent().removeClass("error").addClass("success")
-                  $("input[name='type']").parent().parent().show();
+                  $(".field:not(#host)").show();
                 }else {
                   $(this).parent().parent().addClass("error").removeClass("success")
-                  $("input[name='type']").parent().parent().hide();
+                  $(".field:not(#host)").hide();
                 }
                 $(this).parent().removeClass('loading');
             });

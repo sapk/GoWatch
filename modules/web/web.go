@@ -11,6 +11,7 @@ import (
 
 	"github.com/sapk/GoWatch/routers"
 	"github.com/sapk/GoWatch/routers/admin"
+	"github.com/sapk/GoWatch/routers/api"
 	"github.com/sapk/GoWatch/routers/user"
 
 	"github.com/macaron-contrib/csrf"
@@ -65,5 +66,8 @@ func Start(db *db.Db) {
 		m.Get("/equipement/:id([0-9]+)/del", auth.IsLogged, admin.EquipementDel)
 	})
 
+	m.Group("/api", func() {
+		m.Get("/network/ping", auth.IsLogged, api.Ping)
+	})
 	m.Run()
 }
