@@ -1,16 +1,11 @@
 package network
 
 import (
-	"log"
-	"net"
-	"os"
 	"time"
-
-	"golang.org/x/net/icmp"
-	"golang.org/x/net/internal/iana"
-	"golang.org/x/net/ipv4"
+	"github.com/sapk/GoWatch/modules/watcher"
 )
 
+const maxtimeout = 3*time.Second
 // PingResponse represent ip response and stats
 type PingResponse struct {
 	IP     string
@@ -20,55 +15,27 @@ type PingResponse struct {
 
 //Ping execute a ping and return informations
 func Ping(ip string) PingResponse {
+	
 	//TODO
-	//TODO implement v6
-	c, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
-	if err != nil {
-		log.Fatalf("listen err, %s", err)
-	}
-
-	defer c.Close()
-	wm := icmp.Message{
-		Type: ipv4.ICMPTypeEcho, Code: 0,
-		Body: &icmp.Echo{
-			ID: os.Getpid() & 0xffff, Seq: 1,
-			Data: []byte("COUCOU"),
-		},
-	}
-	wb, err := wm.Marshal(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, err := c.WriteTo(wb, &net.IPAddr{IP: net.ParseIP(ip)}); err != nil {
-		log.Fatalf("WriteTo err, %s", err)
-	}
-
-	start := time.Now()
 	//TODO break on timeout
-PingRespLoop:
-	for {
-		rb := make([]byte, 1500)
-
-		n, peer, err := c.ReadFrom(rb)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		rm, err := icmp.ParseMessage(iana.ProtocolICMP, rb[:n])
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		switch rm.Type {
-		case ipv4.ICMPTypeEchoReply:
-			log.Printf("got reflection from %v", peer)
-			if peer.String() == ip {
-				break PingRespLoop
-			}
-		default:
-			log.Printf("got %+v; want echo reply", rm)
-		}
+	ch := watcher.RegisterPingWatch(ip,maxtimeout)
+	//defer close(ch)
+	watcher.SendPing(ip)
+	start := time.Now()
+	
+	timeout := make(chan bool, 1)
+	go func() {
+	    time.Sleep(maxtimeout)
+	    timeout <- true
+	}()
+	//defer close(timeout)
+	
+	select {
+		case <-ch:
+		    // a read from ch has occurred
+			return PingResponse{IP: ip, Result: true, Time: time.Since(start)}
+		case <-timeout:
+		    // the read from ch has timed out
+			return PingResponse{IP: ip, Result: false, Time: time.Since(start)}
 	}
-
-	return PingResponse{IP: ip, Result: true, Time: time.Since(start)}
 }

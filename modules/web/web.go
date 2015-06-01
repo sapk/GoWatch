@@ -9,6 +9,8 @@ import (
 	//"golang.org/x/crypto/bcrypt"
 	"log"
 
+	"github.com/sapk/GoWatch/modules/watcher"
+	
 	"github.com/sapk/GoWatch/routers"
 	"github.com/sapk/GoWatch/routers/admin"
 	"github.com/sapk/GoWatch/routers/api"
@@ -19,10 +21,11 @@ import (
 )
 
 //Start init the web interface
-func Start(db *db.Db) {
+func Start(db *db.Db, watcher *watcher.Watcher) {
 
 	m := macaron.New()
 	m.Map(db)
+	m.Map(watcher)
 	m.Use(macaron.Logger())
 	m.Use(macaron.Gziper())
 	m.Use(macaron.Static("public"))
