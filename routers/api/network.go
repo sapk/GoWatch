@@ -12,6 +12,6 @@ func Ping(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
 	if err := verificationAuth(ctx, auth, sess); err != nil {
 		return
 	}
-	ip := ctx.Query("ip")
-	ctx.JSON(200, network.Ping(ip))
+	hostorip := ctx.Req.URL.RawQuery
+	ctx.JSON(200, network.Ping(hostorip))
 }

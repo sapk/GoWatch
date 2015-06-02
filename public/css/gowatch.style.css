@@ -42,6 +42,15 @@ body>header.menu .dropdown.item a {
   border-color : #5BBD72;
   background-color : rgba(91,189,114,0.1);
 }
+
+.form .field.warning, .form .field.warning > label, .form .field.warning .icon {
+    color: #EEA236;
+}
+
+.form .field.warning input{
+  border-color : #EEA236;
+  background-color : rgba(191,169,114,0.1);
+}
 /*
 #admin-users .ui.card  {
     width: 180px;

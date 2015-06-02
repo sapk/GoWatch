@@ -11,16 +11,25 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
-type Ping struct {
-		Nb 	  int
-		Ch    chan bool
-		Start time.Time
-		Timeout time.Duration
+// PingResponse represent ip response and stats
+type PingResponse struct {
+	IP     string
+	Result bool
+	Time   time.Duration
+	Error  string
 }
+
+type Ping struct {
+	Nb      int
+	Ch      chan PingResponse
+	Start   time.Time
+	Timeout time.Duration
+}
+
 //Db represent the database
 type Watcher struct {
-	PingListener 	*icmp.PacketConn
-	PingToListen 	map[string]Ping
+	PingListener *icmp.PacketConn
+	PingToListen map[string]Ping
 }
 
 var w Watcher
@@ -35,19 +44,19 @@ func Init() *Watcher {
 	if err != nil {
 		log.Fatalf("listen err, %s", err)
 	}
-	
-	w = Watcher{PingListener : c, PingToListen : make(map[string]Ping)}
-	//Clearer
+
+	w = Watcher{PingListener: c, PingToListen: make(map[string]Ping)}
+	//Clearer check if needed
 	go func() {
 		//TODO support continuous ping
 		for {
 			//every minutes we check for timeout and clean the map
-		    time.Sleep(1 * time.Minute);
+			time.Sleep(1 * time.Minute)
 			log.Println("Scanning PingToListen map:", w.PingToListen)
 			for ip, ping := range w.PingToListen {
-			    log.Println("IP:", ip, "Ping:", ping)
-				if(ping.Nb==0 || time.Since(ping.Start)>ping.Timeout){
-			    	log.Println("Clearing IP:", ip, "Ping:", ping)
+				log.Println("IP:", ip, "Ping:", ping)
+				if ping.Nb == 0 || time.Since(ping.Start) > ping.Timeout {
+					log.Println("Clearing IP:", ip, "Ping:", ping)
 					close(ping.Ch)
 					delete(w.PingToListen, ip)
 				}
@@ -55,64 +64,70 @@ func Init() *Watcher {
 		}
 	}()
 	//Ping watcher
-    go func() {
+	go func() {
 		//TODO clear PingTowatchList for timeout
 		for {
 			rb := make([]byte, 1500)
-	
+
 			n, peer, err := w.PingListener.ReadFrom(rb)
 			if err != nil {
 				log.Fatal(err)
 			}
-	
+
 			rm, err := icmp.ParseMessage(iana.ProtocolICMP, rb[:n])
 			if err != nil {
 				log.Fatal(err)
 			}
-	
+
 			switch rm.Type {
-				case ipv4.ICMPTypeEchoReply:
-					log.Printf("got reflection from %v", peer)
-					if ping, ok := w.PingToListen[peer.String()]; ok {
-						if(time.Since(ping.Start)<ping.Timeout){
-							log.Printf("Sending to chan for %v ...", peer)
-							w.PingToListen[peer.String()].Ch <- true
-						}else{
-							log.Printf("Not sending to chan becose of timeout %v ...", peer)
-						}
-						ping.Nb--
-						w.PingToListen[peer.String()]=ping
-						if(w.PingToListen[peer.String()].Nb==0 || time.Since(ping.Start)>ping.Timeout){
-			    			log.Println("Clearing IP:", peer, "Ping:", ping)
-							close(w.PingToListen[peer.String()].Ch)
-							delete(w.PingToListen, peer.String())
-						}
+			case ipv4.ICMPTypeEchoReply:
+				log.Printf("got reflection from %v", peer)
+				if ping, ok := w.PingToListen[peer.String()]; ok {
+					if time.Since(ping.Start) < ping.Timeout {
+						//if timeout isn't pass
+						log.Printf("Sending to chan for %v ...", peer)
+						w.PingToListen[peer.String()].Ch <- PingResponse{IP: peer.String(), Result: true, Time: time.Since(ping.Start)}
 					}
-				default:
-					log.Printf("got %+v; want echo reply", rm)
+					ping.Nb--
+					w.PingToListen[peer.String()] = ping
+					if w.PingToListen[peer.String()].Nb == 0 {
+						log.Println("Clearing IP:", peer, "Ping:", ping)
+						close(w.PingToListen[peer.String()].Ch)
+						delete(w.PingToListen, peer.String())
+					}
+				}
+			default:
+				log.Printf("got %+v; want echo reply", rm)
 			}
 		}
 	}()
-	
+
 	return &w
 }
-
-
 
 //Get get the Watcher
 func Get() *Watcher {
 	return &w
 }
 
-
-func RegisterPingWatch(ip string, timeout time.Duration) <-chan bool {
+func RegisterPingWatch(ip string, timeout time.Duration) <-chan PingResponse {
 	//TODO use a global event chan
-	out := make(chan bool, 1);
+	out := make(chan PingResponse, 1)
 	//TODO check up is doesn't exist how we handle multiplicity ? a array of ch ?
 	//Implement timeout here
-	w.PingToListen[ip] = Ping{Nb : 1, Start : time.Now(), Ch : out,Timeout : timeout}
-	
-    return out
+	w.PingToListen[ip] = Ping{Nb: 1, Start: time.Now(), Ch: out, Timeout: timeout}
+
+	go func() {
+		time.Sleep(timeout)
+		if ping, ok := w.PingToListen[ip]; ok {
+			log.Println("Clearing IP:", ip, "Ping:", ping)
+			ping.Ch <- PingResponse{IP: ip, Result: false, Time: time.Since(ping.Start)}
+			close(ping.Ch)
+			delete(w.PingToListen, ip)
+		}
+	}()
+
+	return out
 }
 
 //Get get the Watcher

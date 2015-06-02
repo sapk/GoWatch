@@ -50,7 +50,6 @@
           <input style="display:none;" type="submit">
           <div onclick="$(this).addClass('loading').parent().submit();" class="ui animated button green right floated"><div class="visible content">Add</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
           <script>
-          //TODO add SNMP community+pass
           $(function(){
               var match = {
                 ipv4 : "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$",
@@ -58,19 +57,42 @@
                 hostname : "^((?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?)$"
               }
               match.all =  new RegExp("("+match.ipv4+")|("+match.ipv6+")|("+match.hostname+")");
-            $("input[name='iporhostname']").on('keyup', function(){
-                //TODO ping the host or SNMP
-                $(this).parent().addClass('loading');
-                var iporhostname = $(this).val().trim()
+            
+			function check(){
+				var el = $("input[name='iporhostname']");
+                var iporhostname = el.val().trim()
                 console.log(iporhostname + ":" + match.all.test(iporhostname))
                 if(match.all.test(iporhostname)){
-                  $(this).parent().parent().removeClass("error").addClass("success")
+				  $.get("/api/network/ping",iporhostname,function(d){
+						if (el.val().trim() != iporhostname)
+							return; //We do nothing if the host has changed
+						if(d.Result == false){
+							if(d.Error == "")
+								$("#host").addClass("warning");
+							else
+                 				$("#host").addClass("error")
+						}else{
+							$("#host").addClass("success")
+						}
+                		el.parent().removeClass('loading');
+					},"json");
                   $(".field:not(#host)").show();
                 }else {
-                  $(this).parent().parent().addClass("error").removeClass("success")
+                  $("#host").addClass("error")
                   $(".field:not(#host)").hide();
+                  el.parent().removeClass('loading');
                 }
-                $(this).parent().removeClass('loading');
+			}
+			
+			var sequencer;
+			
+			$("input[name='iporhostname']").on('keyup', function(){
+                //TODO ping the host or SNMP
+                $(this).parent().addClass('loading');
+				$("#host").removeClass("warning").removeClass("error").removeClass("success");
+
+				clearTimeout(sequencer);
+				sequencer = window.setTimeout(check,500);
             });
           })
           </script>
