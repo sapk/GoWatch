@@ -8,8 +8,38 @@
     <div class="twelve wide column">
 <div class="ui raised segment">
 		<h3>Equipements :<a class="ui green button compact right floated" href="/admin/equipement/add"><i class="cube icon"></i> Add</a></h3>
-    <div class="ui cards four">
-    </div>
+
+        <table class="ui celled striped table">
+          <thead>
+            <tr>
+                <th>Hostname</th>
+                <th>IP</th>
+                <!--<th>Data</th>-->
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .Equipements}}
+            <tr>
+                <td class="collapsing">
+                  <i class="{{.GetTypeIcon}} icon"></i> {{.Hostname}}
+                </td>
+                <td>{{.IP}}</td>
+                <!--<td>{.Data}</td>-->
+                <td class="right aligned collapsing">{{.Created.Format "2006-01-02 15:04"}}</td>
+                <td class="right aligned collapsing">{{.UpdatedFormated}}m</td>
+                <td class="right aligned collapsing">
+                    <a class="ui icon button red right floated small delete-button" href="/admin/equipement/{{.ID}}/del">
+                        <i class="delete icon"></i>
+                    </a>
+                </td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+
 </div>
 	 </div>
   </div>

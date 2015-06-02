@@ -64,9 +64,13 @@ func SendPing(ip string) {
 	}
 	wb, err := wm.Marshal(nil)
 	if err != nil {
-		log.Fatal(err)
+                log.Println(err)
 	}
-	if _, err := w.PingListener.WriteTo(wb, &net.IPAddr{IP: net.ParseIP(ip)}); err != nil {
+	Ip := net.ParseIP(ip)
+        if Ip == nil {
+                log.Println("IP invalide",err)
+        }
+	if _, err := w.PingListener.WriteTo(wb, &net.IPAddr{IP: Ip}); err != nil {
 		log.Fatalf("WriteTo err, %s", err)
 	}
 }
