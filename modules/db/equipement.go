@@ -54,6 +54,7 @@ func (db *Db) GetEquipementTypes() []string {
 		"Router",
 		"Switch",
 		"Server",
+                "Computer",
 	}
 }
 
@@ -102,6 +103,6 @@ func (equi *Equipement) GetTypeIcon() string {
 
 //UpdatedFormated 
 func (equi *Equipement) UpdatedFormated() string {
-        
-        return strings.Split(time.Since(equi.Updated).String(),"m")[0]
+        sec := int(time.Since(equi.Updated).Seconds())
+        return (time.Duration(sec)*time.Second).String()
 }

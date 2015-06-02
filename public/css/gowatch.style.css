@@ -56,3 +56,24 @@ body>header.menu .dropdown.item a {
     width: 180px;
 }
 */
+table .right.aligned.collapsing .small.delete-button{
+    padding: 4px;
+    font-size: 75%;
+    margin-top: -2px;
+}
+/* Add icons */
+
+i.icon.router:before {
+  content: "\f0a0"; /* Disk Outline */
+}
+
+i.icon.switch:before {
+  content: "\f0e8"; /* Sitemap */
+}
+
+i.icon.computer:before {
+  content: "\f109"; /* Laptop */
+}
+
+
+
