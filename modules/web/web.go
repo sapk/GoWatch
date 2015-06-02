@@ -10,7 +10,7 @@ import (
 	"log"
 
 	"github.com/sapk/GoWatch/modules/watcher"
-	
+
 	"github.com/sapk/GoWatch/routers"
 	"github.com/sapk/GoWatch/routers/admin"
 	"github.com/sapk/GoWatch/routers/api"
@@ -71,6 +71,7 @@ func Start(db *db.Db, watcher *watcher.Watcher) {
 
 	m.Group("/api", func() {
 		m.Get("/network/ping", auth.IsLogged, api.Ping)
+		m.Get("/network/snmptest", auth.IsLogged, api.SNMPTest)
 	})
 	m.Run()
 }

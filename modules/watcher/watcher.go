@@ -2,29 +2,12 @@ package watcher
 
 import (
 	"log"
-	"net"
-	"os"
 	"time"
 
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/internal/iana"
 	"golang.org/x/net/ipv4"
 )
-
-// PingResponse represent ip response and stats
-type PingResponse struct {
-	IP     string
-	Result bool
-	Time   time.Duration
-	Error  string
-}
-
-type Ping struct {
-	Nb      int
-	Ch      chan PingResponse
-	Start   time.Time
-	Timeout time.Duration
-}
 
 //Db represent the database
 type Watcher struct {
@@ -108,43 +91,4 @@ func Init() *Watcher {
 //Get get the Watcher
 func Get() *Watcher {
 	return &w
-}
-
-func RegisterPingWatch(ip string, timeout time.Duration) <-chan PingResponse {
-	//TODO use a global event chan
-	out := make(chan PingResponse, 1)
-	//TODO check up is doesn't exist how we handle multiplicity ? a array of ch ?
-	//Implement timeout here
-	w.PingToListen[ip] = Ping{Nb: 1, Start: time.Now(), Ch: out, Timeout: timeout}
-
-	go func() {
-		time.Sleep(timeout)
-		if ping, ok := w.PingToListen[ip]; ok {
-			log.Println("Clearing IP:", ip, "Ping:", ping)
-			ping.Ch <- PingResponse{IP: ip, Result: false, Time: time.Since(ping.Start)}
-			close(ping.Ch)
-			delete(w.PingToListen, ip)
-		}
-	}()
-
-	return out
-}
-
-//Get get the Watcher
-func SendPing(ip string) {
-	//TODO implement v6
-	wm := icmp.Message{
-		Type: ipv4.ICMPTypeEcho, Code: 0,
-		Body: &icmp.Echo{
-			ID: os.Getpid() & 0xffff, Seq: 1,
-			Data: []byte("COUCOU"),
-		},
-	}
-	wb, err := wm.Marshal(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, err := w.PingListener.WriteTo(wb, &net.IPAddr{IP: net.ParseIP(ip)}); err != nil {
-		log.Fatalf("WriteTo err, %s", err)
-	}
 }

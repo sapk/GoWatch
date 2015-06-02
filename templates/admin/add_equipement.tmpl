@@ -39,14 +39,16 @@
             $(function(){$('.field .dropdown').dropdown({});})
             </script>
           </div>
-          <div class="required field {{if .EquipementAddError}}error{{end}}" style="display:none;">
+          <div id="snmp_community" class="field {{if .EquipementAddError}}error{{end}}" style="display:none;">
             <label>SNMP community</label>
             <div class="ui icon input"><input name="snmp_community" placeholder="public" type="text"><i class="find icon"></i></div>
           </div>
-          <div class="required field {{if .EquipementAddError}}error{{end}}" style="display:none;">
+		<!--
+          <div class="field {{if .EquipementAddError}}error{{end}}" style="display:none;">
             <label>SNMP password</label>
             <div class="ui icon input"><input name="snmp_password" placeholder="public" type="text"><i class="protect icon"></i></div>
           </div>
+		-->
           <input style="display:none;" type="submit">
           <div onclick="$(this).addClass('loading').parent().submit();" class="ui animated button green right floated"><div class="visible content">Add</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
           <script>
@@ -58,7 +60,7 @@
               }
               match.all =  new RegExp("("+match.ipv4+")|("+match.ipv6+")|("+match.hostname+")");
             
-			function check(){
+			function checkPing(){
 				var el = $("input[name='iporhostname']");
                 var iporhostname = el.val().trim()
                 console.log(iporhostname + ":" + match.all.test(iporhostname))
@@ -83,16 +85,45 @@
                   el.parent().removeClass('loading');
                 }
 			}
+			function checkSNMP(){
+				var el = $("input[name='snmp_community']");
+                var community = el.val().trim()
+                var iporhostname = $("input[name='iporhostname']").val().trim()
+                if(match.all.test(iporhostname)){
+					//On test que si le host est déjà valide
+				  $.get("/api/network/snmptest",{host:iporhostname,community:community},function(d){
+						if (el.val().trim() != community)
+							return; //We do nothing if the community  has changed
+						if(d.Result == false){
+							if(d.Error == "timeout")
+								$("#snmp_community").addClass("warning");
+							else
+                 				$("#snmp_community").addClass("error")
+						}else{
+							$("#snmp_community").addClass("success")
+						}
+                		el.parent().removeClass('loading');
+					},"json");
+                }
+			}
 			
-			var sequencer;
+			var sequencerPing;			
+			var sequencerSNMP;
+
 			
 			$("input[name='iporhostname']").on('keyup', function(){
-                //TODO ping the host or SNMP
                 $(this).parent().addClass('loading');
 				$("#host").removeClass("warning").removeClass("error").removeClass("success");
 
-				clearTimeout(sequencer);
-				sequencer = window.setTimeout(check,500);
+				clearTimeout(sequencerPing);
+				sequencerPing = window.setTimeout(checkPing,500);
+            });
+			$("input[name='snmp_community']").on('keyup', function(){
+                $(this).parent().addClass('loading');
+				$("#snmp_community").removeClass("warning").removeClass("error").removeClass("success");
+
+				clearTimeout(sequencerSNMP);
+				sequencerSNMP = window.setTimeout(checkSNMP,500);
             });
           })
           </script>
