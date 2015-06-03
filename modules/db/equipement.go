@@ -112,6 +112,6 @@ func (equi *Equipement) UpdatedFormated() string {
 }
 //Update 
 func (equi *Equipement) Update() error {
-        _, err := (*db.Orm).Update(equi)
+        _, err := (*db.Orm).Update(equi, "Data", "Updated")
         return err
 }
