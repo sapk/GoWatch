@@ -176,7 +176,7 @@ func StartPingWatcher() {
                             }
                     }
                 default:
-                    log.Printf("got %+v; want echo reply", rm)
+                    //log.Printf("got %+v; want echo reply", rm)
                 }
             }
         }()
@@ -188,11 +188,19 @@ func StartLoopPing() {
         go func() {
             //TODO support continuous ping
             for {
-                //every minutes we check for timeout and clean the map
-                time.Sleep(1 * time.Minute)
-                log.Println("Scanning PingToListen map:", w.PingToListen)
+                //every maxUniqePingTimeout we check for timeout and clean the map
+                //time.Sleep(maxUniqePingTimeout)
+                //log.Println("Scanning PingToListen map:", w.PingToListen)
                 for ip, _ := range w.PingToListen {
                         ClearPingIfNeeded(ip) //We do cleanup before every thing
+
+                        if ping, ok := w.PingToListen[ip]; ok && ping.Timeout==0 && len(ping.Send) == 0{
+                                //the pin has not been cleared and it's a contnious and we are not expecting a ping 
+                                //So we could send another
+                                SendPing(ip);
+                                timetowait := 2*(int64(maxUniqePingTimeout)/int64(len(w.PingToListen)))
+                                time.Sleep(time.Duration(timetowait)) //scale for the number waiting
+                        }
                 }
             }
         }()

@@ -15,7 +15,7 @@ func main() {
 	d := db.InitDb()
 	log.Println("Db initialised !")
 	
-	w := watcher.Init()
+	w := watcher.Init(d)
 	log.Println("Watcher initialised !")
 
 	web.Start(d,w)

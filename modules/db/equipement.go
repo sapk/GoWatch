@@ -32,6 +32,10 @@ func (db *Db) NbEquipements() int64 {
 func (db *Db) GetEquipement(equi Equipement) (*Equipement, error) {
     return &equi, (*db.Orm).Read(&equi)
 }
+ // GetEquipement return Equipement by param
+ func (db *Db) GetEquipementbyIP(equi Equipement) (*Equipement, error) {
+     return &equi, (*db.Orm).Read(&equi,"IP")
+ }
 //GetEquipements return the list of Equipement in database
 func (db *Db) GetEquipements() (int64, []*Equipement) {
 	var equipements []*Equipement
@@ -105,4 +109,9 @@ func (equi *Equipement) GetTypeIcon() string {
 func (equi *Equipement) UpdatedFormated() string {
         sec := int(time.Since(equi.Updated).Seconds())
         return (time.Duration(sec)*time.Second).String()
+}
+//Update 
+func (equi *Equipement) Update() error {
+        _, err := (*db.Orm).Update(equi)
+        return err
 }
