@@ -44,12 +44,12 @@ func UserDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.
 		ctx.Data["message_text"] = "You can't delete the master user."
 		ctx.Data["message_redirect"] = "/admin/users"
 		ctx.HTML(200, "other/message")
-	} else if !x.ValidToken(ctx.Query("confirm")) {
+	} else if !csrf.ValidToken(ctx.Query("confirm"),"8e82e24bca448c990f69f5c364fc15ae",string(sess.Get("user").(db.User).ID), "delete.user") {
 		// Ask for confirmation
 		ctx.Data["message_categorie"] = ""
 		ctx.Data["message_icon"] = "user"
 		ctx.Data["message_header"] = "Confirm user deletion!"
-		ctx.Data["csrf_token"] = x.GetToken()
+                ctx.Data["csrf_token"] = csrf.GenerateToken("8e82e24bca448c990f69f5c364fc15ae",string(sess.Get("user").(db.User).ID), "delete.user")
 		sess.Set("crsf_user_id", user.ID)
 		ctx.Data["message_text"] = strings.Join([]string{"Do you really want to delete : ", user.Username}, " ")
 

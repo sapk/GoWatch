@@ -6,6 +6,7 @@ import (
 	"github.com/sapk/GoWatch/modules/db"
 	"github.com/sapk/GoWatch/modules/watcher"
 	"github.com/sapk/GoWatch/modules/web"
+        "github.com/sapk/GoWatch/modules/rrd"
 )
 
 func main() {
@@ -17,6 +18,9 @@ func main() {
 	
 	w := watcher.Init(d)
 	log.Println("Watcher initialised !")
+	
+        r := rrd.Init()
+        log.Println("RRD initialised !")
 
-	web.Start(d,w)
+	web.Start(d,w,r)
 }

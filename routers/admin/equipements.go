@@ -42,19 +42,19 @@ func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db
             ctx.Data["message_text"] = "The equipement seems to not be in the database"
             ctx.Data["message_redirect"] = "/admin/equipements"
             ctx.HTML(200, "other/message")
-        } else if !x.ValidToken(ctx.Query("confirm")) {
+        } else if !csrf.ValidToken(ctx.Query("confirm"),"8e82e24bca448c990f69f5c364fc15ae",string(sess.Get("user").(db.User).ID), "delete.equipement") {
             // Ask for confirmation
             ctx.Data["message_categorie"] = ""
             ctx.Data["message_icon"] = "server"
             ctx.Data["message_header"] = "Confirm equipement deletion!"
-            ctx.Data["csrf_token"] = x.GetToken()
-            sess.Set("crsf_user_id", equi.ID)
+            ctx.Data["csrf_token"] = csrf.GenerateToken("8e82e24bca448c990f69f5c364fc15ae",string(sess.Get("user").(db.User).ID), "delete.equipement")
+            sess.Set("crsf_equi_id", equi.ID)
             ctx.Data["message_text"] = strings.Join([]string{"Do you really want to delete : ", equi.Hostname}, " ")
     
             ctx.HTML(200, "other/confirmation")
         } else {
             // We del the user if all is good
-            if sess.Get("crsf_user_id") != equi.ID {
+            if sess.Get("crsf_equi_id") != equi.ID {
                 ctx.Data["message_categorie"] = "negative"
                 ctx.Data["message_icon"] = "server"
                 ctx.Data["message_header"] = "Hummm ..."
@@ -79,7 +79,7 @@ func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db
             ctx.Data["message_text"] = "The equipement has been deleted from the database."
             ctx.Data["message_redirect"] = "/admin/equipements"
             ctx.HTML(200, "other/message")
-            sess.Delete("crsf_user_id")
+            sess.Delete("crsf_equi_id")
         }
     
 }

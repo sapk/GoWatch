@@ -7,6 +7,7 @@ import (
 	"time"
 	"regexp"
 	"github.com/sapk/GoWatch/modules/tools"
+        "github.com/sapk/GoWatch/modules/rrd"
 
         "encoding/binary"
 	"golang.org/x/net/icmp"
@@ -198,7 +199,7 @@ func StartLoopPing() {
                                 //the pin has not been cleared and it's a contnious and we are not expecting a ping 
                                 //So we could send another
                                 SendPing(ip);
-                                timetowait := 2*(int64(maxUniqePingTimeout)/int64(len(w.PingToListen)))
+                                timetowait := (int64(rrd.Step*time.Second)/int64(len(w.PingToListen)))
                                 time.Sleep(time.Duration(timetowait)) //scale for the number waiting
                         }
                 }

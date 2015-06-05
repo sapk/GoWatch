@@ -5,7 +5,9 @@ import (
         "sync"
 	"golang.org/x/net/icmp"
         "github.com/sapk/GoWatch/modules/db"
-        "fmt"
+        "github.com/sapk/GoWatch/modules/rrd"
+//        "fmt"
+        "time"
 )
 
 //Db represent the database
@@ -47,9 +49,10 @@ func Init(d *db.Db) *Watcher {
                // at each response
                //TODO log
                log.Println(rep);
-               eq, _ := d.GetEquipementbyIP(db.Equipement{IP:rep.IP})
-               eq.Data=fmt.Sprintf("%v",rep)
-               eq.Update()
+               //eq, _ := d.GetEquipementbyIP(db.Equipement{IP:rep.IP})
+               //eq.Data=fmt.Sprintf("%v",rep)
+               //eq.Update()
+               rrd.Add(float64(rep.Time)/float64(time.Millisecond))
            }
         }()
         

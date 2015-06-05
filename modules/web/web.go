@@ -10,6 +10,7 @@ import (
 	"log"
 
 	"github.com/sapk/GoWatch/modules/watcher"
+        "github.com/sapk/GoWatch/modules/rrd"
 
 	"github.com/sapk/GoWatch/routers"
 	"github.com/sapk/GoWatch/routers/admin"
@@ -21,7 +22,7 @@ import (
 )
 
 //Start init the web interface
-func Start(db *db.Db, watcher *watcher.Watcher) {
+func Start(db *db.Db, watcher *watcher.Watcher, rrd *rrd.RRD) {
 
 	m := macaron.New()
 	m.Map(db)
