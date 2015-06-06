@@ -9,12 +9,13 @@ import (
 	//"golang.org/x/crypto/bcrypt"
 	"log"
 
+	"github.com/sapk/GoWatch/modules/rrd"
 	"github.com/sapk/GoWatch/modules/watcher"
-        "github.com/sapk/GoWatch/modules/rrd"
 
 	"github.com/sapk/GoWatch/routers"
 	"github.com/sapk/GoWatch/routers/admin"
 	"github.com/sapk/GoWatch/routers/api"
+	"github.com/sapk/GoWatch/routers/equipement"
 	"github.com/sapk/GoWatch/routers/user"
 
 	"github.com/macaron-contrib/csrf"
@@ -57,7 +58,10 @@ func Start(db *db.Db, watcher *watcher.Watcher, rrd *rrd.RRD) {
 		m.Post("/login", auth.SignIn)
 		m.Get("/logout", auth.LogOut)
 	})
-
+	m.Group("/equipement", func() {
+		m.Get("s", auth.IsLogged, equipement.Dashboard)
+		m.Get("/:id([0-9]+)", auth.IsLogged, equipement.View)
+	})
 	m.Group("/admin", func() {
 		m.Get("/", auth.IsLogged, admin.Dashboard)
 		m.Get("/users", auth.IsLogged, admin.Users)

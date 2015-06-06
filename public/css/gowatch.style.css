@@ -91,3 +91,6 @@ i.icon.others:before {
   content: "\f1b2""; /* Cube */
 }
 
+a.equipement > i.icon{
+  color : rgba(0, 0, 0, 0.8);
+}

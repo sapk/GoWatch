@@ -24,7 +24,9 @@
             {{range .Equipements}}
             <tr>
                 <td class="collapsing">
-                  <i class="{{.GetTypeIcon}} icon"></i> {{.Hostname}}
+                  <a href="/equipement/{{.ID}}" class="equipement">
+                    <i class="{{.GetTypeIcon}} icon"></i> {{.Hostname}}
+                  </a>
                 </td>
                 <td>{{.IP}}</td>
                 <!--<td>{.Data}</td>-->
