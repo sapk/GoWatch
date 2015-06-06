@@ -11,6 +11,8 @@ import (
 func EquipementPing(ID, duration string, out io.Writer) error {
 	now := time.Now()
 	switch duration {
+	case "minute":
+		out.Write(rrd.GraphPing(ID, "5 minutes", now.Add(-time.Minute*5), now))
 	case "hour":
 		out.Write(rrd.GraphPing(ID, "Hourly", now.Add(-time.Hour), now))
 	case "day":

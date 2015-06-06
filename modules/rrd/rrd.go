@@ -14,9 +14,9 @@ const (
 	dbfolder = "data"
 	dbfile   = "icmp.rrd"
 	//Step The step of logging (60 secs)
-	Step = 30
+	Step = 10
 	//Heartbeat minimal time to consider alive
-	Heartbeat = 4 * Step
+	Heartbeat = 3 * Step
 )
 
 //RRD represent the database
@@ -41,9 +41,10 @@ func Create(ID string) {
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		c := rrd.NewCreator(file, time.Now(), Step)
 		c.DS("ping", "GAUGE", Heartbeat, 0, Heartbeat*1000) //Heartbeat in Millisecond
-		c.RRA("AVERAGE", 0.5, 2, 60)                        //Each minute * 60 -> 1h
-		c.RRA("AVERAGE", 0.5, 2*60/10, 24*10)               //Each hour/10 * 24 -> 1days
-		c.RRA("AVERAGE", 0.5, 2*60*24/100, 7*100)           //Each days/100 * 7 -> 1week
+		c.RRA("AVERAGE", 0.5, 1, 6*5)                       //Each 10 sec * 6*5 -> 5minutes
+		c.RRA("AVERAGE", 0.5, 1*3, 60*2)                    //Each 1/2 minutes * 60*2 -> 1h
+		c.RRA("AVERAGE", 0.5, 1*6*60/10, 24*10)             //Each hour/10 * 24 -> 1days
+		c.RRA("AVERAGE", 0.5, 1*6*60*24/100, 7*100)         //Each days/100 * 7 -> 1week
 		err := c.Create(false)
 		if err != nil {
 			log.Fatal("Creating element rrd db failed : ", err)

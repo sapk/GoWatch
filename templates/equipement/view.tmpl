@@ -6,8 +6,15 @@
 	Eq Data : {{.equipement.Data}}<br>
 	Eq Created : {{.equipement.Created}}<br>
 	Eq Updated : {{.equipement.Updated}}<br>
-	<img src="/api/graph/equipement/{{.equipement.ID}}/hour.png" />
-	<img src="/api/graph/equipement/{{.equipement.ID}}/day.png" />
-	<img src="/api/graph/equipement/{{.equipement.ID}}/week.png" />
+	<img id="graph-minute" src="/api/graph/equipement/{{.equipement.ID}}/minute.png" onload="reload('#graph-minute','{{.equipement.ID}}','minute',10*1000)" />
+	<img id="graph-hour" src="/api/graph/equipement/{{.equipement.ID}}/hour.png" onload="reload('#graph-hour','{{.equipement.ID}}','hour',10*1000*3)" />
+	<img id="graph-day" src="/api/graph/equipement/{{.equipement.ID}}/day.png" onload="reload('#graph-day','{{.equipement.ID}}','day',10*1000*6*60/10)" />
+	<img id="graph-week" src="/api/graph/equipement/{{.equipement.ID}}/week.png" onload="reload('#graph-week','{{.equipement.ID}}','week',10*1000*6*60*24/100)" />
+
 </div>
+<script>
+	function reload(el,id,type,time){
+		window.setTimeout("$('"+el+"').attr('src','/api/graph/equipement/"+id+"/"+type+".png?' + new Date().getTime())",time);
+	}
+</script>
 {{template "base/footer" .}}
