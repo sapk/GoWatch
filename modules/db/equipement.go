@@ -58,6 +58,7 @@ func (db *Db) GetEquipementTypes() []string {
 		"Router",
 		"Switch",
 		"Server",
+                "Firewall",
                 "WLAN",
                 "Computer",
                 "EndPoint",

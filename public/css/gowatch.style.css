@@ -74,3 +74,20 @@ i.icon.switch:before {
 i.icon.computer:before {
   content: "\f109"; /* Laptop */
 }
+
+i.icon.wlan:before {
+  content: "\f1eb"; /* Wifi */
+}
+
+i.icon.endpoint:before {
+  content: "\f111"; /* Circle */
+}
+
+i.icon.firewall:before {
+  content: "\f132"; /* Protect */
+}
+
+i.icon.others:before {
+  content: "\f1b2""; /* Cube */
+}
+
