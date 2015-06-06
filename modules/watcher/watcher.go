@@ -6,14 +6,19 @@ import (
 	"golang.org/x/net/icmp"
         "github.com/sapk/GoWatch/modules/db"
         "github.com/sapk/GoWatch/modules/rrd"
+        "strconv"
 //        "fmt"
-        "time"
+//        "time"
 )
 
+type CPingMap struct{
+    sync.RWMutex
+    m map[string]Ping
+}
 //Db represent the database
 type Watcher struct {
 	PingListener *icmp.PacketConn
-	PingToListen map[string]Ping
+	PingToListen CPingMap
         PingSeq uint
 }
 
@@ -32,7 +37,7 @@ func Init(d *db.Db) *Watcher {
 		log.Fatalf("listen err, %s", err)
 	}
 
-	w = Watcher{PingListener: c, PingToListen: make(map[string]Ping)}
+	w = Watcher{PingListener: c, PingToListen: CPingMap{m: make(map[string]Ping)}}
 
         StartPingWatcher()
         
@@ -49,10 +54,10 @@ func Init(d *db.Db) *Watcher {
                // at each response
                //TODO log
                log.Println(rep);
-               //eq, _ := d.GetEquipementbyIP(db.Equipement{IP:rep.IP})
+               eq, _ := d.GetEquipementbyIP(db.Equipement{IP:rep.IP})
                //eq.Data=fmt.Sprintf("%v",rep)
-               //eq.Update()
-               rrd.Add(float64(rep.Time)/float64(time.Millisecond))
+               eq.Update()
+               rrd.AddPing(strconv.FormatUint(eq.ID,10), rep.Time)
            }
         }()
         

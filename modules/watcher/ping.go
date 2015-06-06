@@ -32,6 +32,7 @@ type PingSend struct {
     at   time.Time
 }
 
+
 type Ping struct {
 	Ch      chan PingResponse
 	Start   time.Time  //TODO remove this and base calcul on Send[] average
@@ -54,19 +55,20 @@ func RegisterPingWatch(ip string, timeout time.Duration) <-chan PingResponse {
         }
 
 	//If we don't have it we make it
-        if ping, ok := w.PingToListen[ip]; !ok {
-	        w.PingToListen[ip] = Ping{Start: time.Now(), Ch: out, Timeout: timeout, Send: make(map[int]PingSend)}
+	w.PingToListen.RLock()
+        if ping, ok := w.PingToListen.m[ip]; !ok {
+	        w.PingToListen.m[ip] = Ping{Start: time.Now(), Ch: out, Timeout: timeout, Send: make(map[int]PingSend)}
         }else if timeout==0 {
                 //If we register for unlimited listen and the ip is already in listen but not neccesrry in unltimate
                 ping.Timeout = timeout
-                w.PingToListen[ip] = ping
+                w.PingToListen.m[ip] = ping
         }else {
                 //We reset start counter for timeout
                 ping.Start = time.Now()
-                w.PingToListen[ip] = ping
+                w.PingToListen.m[ip] = ping
                 
         }
-        
+        w.PingToListen.RUnlock()
         //Si le timeout est supérieur à 0 le minimum on active le timeout
         if(timeout>0){
         	go func() {
@@ -74,18 +76,19 @@ func RegisterPingWatch(ip string, timeout time.Duration) <-chan PingResponse {
         		ClearPingIfNeeded(ip)
         	}()
         }
-	return w.PingToListen[ip].Ch;
+	return w.PingToListen.m[ip].Ch;
 }
 
 func ClearPingIfNeeded(ip string) {
+    w.PingToListen.RLock()
     //Verify that it still exist
-    if ping, ok := w.PingToListen[ip]; ok {
+    if ping, ok := w.PingToListen.m[ip]; ok {
         //We verfiy that it doesn't become unlimited during the timeout
         if ping.Timeout>0 && time.Since(ping.Start) > ping.Timeout  {
                  log.Println("Clearing IP:", ip, "Ping:", ping)
                  ping.Ch <- PingResponse{IP: ip, Result: false, Time: time.Since(ping.Start)}
                  close(ping.Ch)
-                 delete(w.PingToListen, ip)
+                 delete(w.PingToListen.m, ip)
         }else {
                 //If it 's unlimited or not timeouted we clear all Send maxuniqtimeouted
                 for seq, send := range ping.Send {
@@ -94,9 +97,10 @@ func ClearPingIfNeeded(ip string) {
                         }
                 }
                 
-                w.PingToListen[ip] = ping
+                w.PingToListen.m[ip] = ping
         }
     }
+    w.PingToListen.RUnlock()
 }
 
 //Get get the Watcher
@@ -107,7 +111,9 @@ func SendPing(ip string) int {
            log.Println("Invalid IP")
            return -1
         }
-        ping, ok := w.PingToListen[ip]
+        
+        w.PingToListen.RLock()
+        ping, ok := w.PingToListen.m[ip]
         //If we don't wait for a response we don't send anything
         if !ok {
             log.Println("Don't send a Ping we don't listen to is response")
@@ -132,8 +138,10 @@ func SendPing(ip string) int {
 		log.Printf("WriteTo err, %s", err)
 	}else{
 	        ping.Send[seq] = PingSend{at: time.Now()}
-	        w.PingToListen[ip] = ping;
+	        w.PingToListen.m[ip] = ping;
 	}
+	
+        w.PingToListen.RUnlock()
 	return seq
 }
 
@@ -161,7 +169,9 @@ func StartPingWatcher() {
                     log.Printf("got reflection from %v", peer)
                     ip := peer.String()
                     ClearPingIfNeeded(ip) //do all the cleaning stuff for timeouted
-                    if ping, ok := w.PingToListen[ip]; ok {
+                    
+                    w.PingToListen.RLock()
+                    if ping, ok := w.PingToListen.m[ip]; ok {
                             b,_ := rm.Body.Marshal(4);
                             buf := bytes.NewReader(b) // b is []byte
                             var uid,useq uint16
@@ -173,9 +183,10 @@ func StartPingWatcher() {
                                  log.Printf("Sending to chan for %v ...", ip)
                                  ping.Ch <- PingResponse{IP: ip, Result: true, Time: time.Since(send.at)}
                                  delete(ping.Send, seq)
-                                 w.PingToListen[ip] = ping
+                                 w.PingToListen.m[ip] = ping
                             }
                     }
+                    w.PingToListen.RUnlock()
                 default:
                     //log.Printf("got %+v; want echo reply", rm)
                 }
@@ -192,16 +203,22 @@ func StartLoopPing() {
                 //every maxUniqePingTimeout we check for timeout and clean the map
                 //time.Sleep(maxUniqePingTimeout)
                 //log.Println("Scanning PingToListen map:", w.PingToListen)
-                for ip, _ := range w.PingToListen {
+                for ip, _ := range w.PingToListen.m {
                         ClearPingIfNeeded(ip) //We do cleanup before every thing
 
-                        if ping, ok := w.PingToListen[ip]; ok && ping.Timeout==0 && len(ping.Send) == 0{
+                        w.PingToListen.RLock()
+                        if ping, ok := w.PingToListen.m[ip]; ok && ping.Timeout==0 && len(ping.Send) == 0{
                                 //the pin has not been cleared and it's a contnious and we are not expecting a ping 
                                 //So we could send another
+                                //TODO make sure that we pass each step for each el so here we take amargin of /2  but could better if coudl ping at excatly Step bettween each 
                                 SendPing(ip);
-                                timetowait := (int64(rrd.Step*time.Second)/int64(len(w.PingToListen)))
+                                timetowait := (int64(rrd.Step*time.Second/2)/int64(len(w.PingToListen.m)))
+                                //log.Println("Wainting :",time.Duration(timetowait))
                                 time.Sleep(time.Duration(timetowait)) //scale for the number waiting
+                        }else{
+                                log.Println("Skipping because it's not a continous ping or a ping is already pending", ip)
                         }
+                        w.PingToListen.RUnlock()
                 }
             }
         }()
