@@ -31,7 +31,10 @@
                 <td class="right aligned collapsing">{{.Created.Format "2006-01-02 15:04"}}</td>
                 <td class="right aligned collapsing">{{.UpdatedFormated}}</td>
                 <td class="right aligned collapsing">
-                    <a class="ui icon button red right floated small delete-button" href="/admin/equipement/{{.ID}}/del">
+                    <a class="ui icon button small" onclick="refresh(this,'{{.IP}}')">
+                        <i class="refresh icon"></i>
+                    </a>
+                    <a class="ui icon button red small delete-button" href="/admin/equipement/{{.ID}}/del">
                         <i class="delete icon"></i>
                     </a>
                 </td>
@@ -39,7 +42,14 @@
             {{end}}
             </tbody>
         </table>
-
+<script>
+  function refresh(el,iporhost){
+    $(el).addClass("loading")
+    $.get("/api/network/ping",iporhost,function(){
+      window.location.reload();
+    })
+  }
+</script>
 </div>
 	 </div>
   </div>

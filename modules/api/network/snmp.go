@@ -1,20 +1,22 @@
 package network
 
 import (
-	"github.com/sapk/GoWatch/modules/watcher"
 	"log"
 	"net"
 	"regexp"
 	"time"
+
+	"github.com/sapk/GoWatch/modules/tools"
+	"github.com/sapk/GoWatch/modules/watcher"
 )
 
-const snmp_timeout = 5 * time.Second
+const snmpTimeout = 5 * time.Second
 
 //SNMPTest execute a snmp request and return informations for testing
 func SNMPTest(hostorip, community string) watcher.SNMPResponse {
 	ip := hostorip
 
-	if ok, _ := regexp.MatchString(ValidIpAddressRegex, ip); !ok {
+	if ok, _ := regexp.MatchString(tools.ValidIpAddressRegex, ip); !ok {
 		//Si ce n'est un ip on essaie de le résoudre
 		i, err := net.ResolveIPAddr("ip", hostorip)
 		ip = i.String()
@@ -24,6 +26,6 @@ func SNMPTest(hostorip, community string) watcher.SNMPResponse {
 		}
 	}
 	log.Println("IP to scan ", ip)
-	return watcher.SNMPTest(ip, community, snmp_timeout)
+	return watcher.SNMPTest(ip, community, snmpTimeout)
 
 }
