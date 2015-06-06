@@ -10,7 +10,9 @@ import (
 )
 
 //Dashboard render the dashboard of equipements
-func Dashboard(ctx *macaron.Context) {
+func Dashboard(ctx *macaron.Context, dbb *db.Db) {
+	ctx.Data["equipements_count"], ctx.Data["Equipements"] = dbb.GetEquipements()
+	ctx.Data["EquipementTypes"] = dbb.GetEquipementTypes()
 	ctx.HTML(200, "equipement/dashboard")
 }
 

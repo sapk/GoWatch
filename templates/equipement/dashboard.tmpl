@@ -2,5 +2,29 @@
 <br><br>
 <div class="container">
 	Equipements Dashboard
+	        <table class="ui celled striped table">
+	          <thead>
+	            <tr>
+	                <th>Hostname</th>
+	                <th>IP</th>
+	                <th>Created</th>
+	                <th>Updated</th>
+	            </tr>
+	          </thead>
+	          <tbody>
+	            {{range .Equipements}}
+	            <tr>
+	                <td class="collapsing">
+	                  <a href="/equipement/{{.ID}}" class="equipement">
+	                    <i class="{{.GetTypeIcon}} icon"></i> {{.Hostname}}
+	                  </a>
+	                </td>
+	                <td>{{.IP}}</td>
+	                <td class="right aligned collapsing">{{.Created.Format "2006-01-02 15:04"}}</td>
+	                <td class="right aligned collapsing">{{.UpdatedFormated}}</td>
+	            </tr>
+	            {{end}}
+	            </tbody>
+	        </table>
 </div>
 {{template "base/footer" .}}

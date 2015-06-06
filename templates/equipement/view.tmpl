@@ -1,6 +1,13 @@
 {{template "base/head" .}}
 <br><br>
 <div class="container">
-	Eq id : {{.equipement.ID}}
+	Eq ID : {{.equipement.ID}}<br>
+  Eq IP : {{.equipement.IP}}<br>
+	Eq Data : {{.equipement.Data}}<br>
+	Eq Created : {{.equipement.Created}}<br>
+	Eq Updated : {{.equipement.Updated}}<br>
+	<img src="/api/graph/equipement/{{.equipement.ID}}/hour.png" />
+	<img src="/api/graph/equipement/{{.equipement.ID}}/day.png" />
+	<img src="/api/graph/equipement/{{.equipement.ID}}/week.png" />
 </div>
 {{template "base/footer" .}}
