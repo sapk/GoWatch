@@ -16,7 +16,7 @@ const snmpTimeout = 5 * time.Second
 func SNMPTest(hostorip, community string) watcher.SNMPResponse {
 	ip := hostorip
 
-	if ok, _ := regexp.MatchString(tools.ValidIpAddressRegex, ip); !ok {
+	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
 		//Si ce n'est un ip on essaie de le résoudre
 		i, err := net.ResolveIPAddr("ip", hostorip)
 		ip = i.String()

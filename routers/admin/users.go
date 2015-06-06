@@ -15,7 +15,7 @@ import (
 
 // Users generate the admin page for users management
 func Users(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
-	if err := verificationAuth(ctx, auth, sess, []string{"admin.users"}); err != nil {
+	if err := auth.VerificationAuth(ctx, sess, []string{"admin.users"}); err != nil {
 		return
 	}
 	fillGlobalPage(ctx, db, "admin_users")
@@ -25,7 +25,7 @@ func Users(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db)
 
 // UserDel handle deletion of one user
 func UserDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.Db, x csrf.CSRF) {
-	if err := verificationAuth(ctx, auth, sess, []string{"del.user"}); err != nil {
+	if err := auth.VerificationAuth(ctx, sess, []string{"del.user"}); err != nil {
 		return
 	}
 	id, _ := strconv.ParseUint(ctx.Params(":id"), 10, 64)
@@ -44,12 +44,12 @@ func UserDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.
 		ctx.Data["message_text"] = "You can't delete the master user."
 		ctx.Data["message_redirect"] = "/admin/users"
 		ctx.HTML(200, "other/message")
-	} else if !csrf.ValidToken(ctx.Query("confirm"),"8e82e24bca448c990f69f5c364fc15ae",string(sess.Get("user").(db.User).ID), "del.user") {
+	} else if !csrf.ValidToken(ctx.Query("confirm"), "8e82e24bca448c990f69f5c364fc15ae", string(sess.Get("user").(db.User).ID), "del.user") {
 		// Ask for confirmation
 		ctx.Data["message_categorie"] = ""
 		ctx.Data["message_icon"] = "user"
 		ctx.Data["message_header"] = "Confirm user deletion!"
-                ctx.Data["csrf_token"] = csrf.GenerateToken("8e82e24bca448c990f69f5c364fc15ae",string(sess.Get("user").(db.User).ID), "del.user")
+		ctx.Data["csrf_token"] = csrf.GenerateToken("8e82e24bca448c990f69f5c364fc15ae", string(sess.Get("user").(db.User).ID), "del.user")
 		sess.Set("crsf_user_id", user.ID)
 		ctx.Data["message_text"] = strings.Join([]string{"Do you really want to delete : ", user.Username}, " ")
 
@@ -88,7 +88,7 @@ func UserDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.
 
 // UserAdd generate the admin page for adding a user
 func UserAdd(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
-	if err := verificationAuth(ctx, auth, sess, []string{"add.user"}); err != nil {
+	if err := auth.VerificationAuth(ctx, sess, []string{"add.user"}); err != nil {
 		return
 	}
 	fillGlobalPage(ctx, db, "admin_users")
@@ -98,7 +98,7 @@ func UserAdd(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.D
 
 // UserAddPost handle the adding of a user
 func UserAddPost(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
-	if err := verificationAuth(ctx, auth, sess, []string{"add.user"}); err != nil {
+	if err := auth.VerificationAuth(ctx, sess, []string{"add.user"}); err != nil {
 		return
 	}
 	err := db.CreateUser(ctx.Query("username"), ctx.Query("password"), ctx.Query("email"), ctx.Query("role"), auth.GetRoles())

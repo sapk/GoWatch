@@ -16,7 +16,7 @@ const pingTimeout = 3 * time.Second
 func Ping(hostorip string) watcher.PingResponse {
 	ip := hostorip
 
-	if ok, _ := regexp.MatchString(tools.ValidIpAddressRegex, ip); !ok {
+	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
 		//Si ce n'est un ip on essaie de le résoudre
 		i, err := net.ResolveIPAddr("ip", hostorip)
 		ip = i.String()
@@ -26,7 +26,7 @@ func Ping(hostorip string) watcher.PingResponse {
 		}
 	}
 	//Si cela ne match toujours pas une ip c'est un echec
-	if ok, _ := regexp.MatchString(tools.ValidIpAddressRegex, ip); !ok {
+	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
 		return watcher.PingResponse{IP: "", Result: false, Time: 0, Error: "hostname-unresolved"}
 	}
 	log.Println("IP to scan ", ip)

@@ -63,7 +63,7 @@ func RegisterPingWatch(ip string, timeout time.Duration) (*tools.BroadcastReceiv
 	out := tools.NewBroadcaster()
 	log.Println("Adding ", ip, "to watch list")
 	//If ip is invali we do nothing except send a massaeg contian error
-	if ok, _ := regexp.MatchString(tools.ValidIpAddressRegex, ip); !ok {
+	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
 		//out <- PingResponse{IP: ip, Result: false, Time: 0, Error: "Invalid IP"}
 		return nil, errors.New("Invalid IP")
 	}
@@ -125,7 +125,7 @@ func ClearPingIfNeeded(ip string) {
 func SendPing(ip string) int {
 	//TODO implement v6
 	//If ip is invali we do nothing
-	if ok, _ := regexp.MatchString(tools.ValidIpAddressRegex, ip); !ok {
+	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
 		log.Println("Invalid IP")
 		return -1
 	}

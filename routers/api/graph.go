@@ -9,7 +9,7 @@ import (
 
 // GraphPing graph ping the data from ip
 func GraphPing(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
-	if err := verificationAuth(ctx, auth, sess); err != nil {
+	if err := auth.VerificationAuth(ctx, sess, []string{"api.graph.ping"}); err != nil {
 		return
 	}
 	ctx.Header().Set("Expires", "0")

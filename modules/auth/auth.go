@@ -3,6 +3,7 @@ package auth
 
 import (
 	//"encoding/json"
+	"errors"
 	"log"
 
 	"github.com/Unknwon/macaron"
@@ -123,4 +124,22 @@ func IsGranted(action string, sess session.Store, auth *Auth) bool {
 	*/
 	//First only role allowed
 	return auth.rbac.IsGranted(sess.Get("user").(db.User).Roles, action, nil)
+}
+
+//VerificationAuth verify if the needed are filled
+func (auth *Auth) VerificationAuth(ctx *macaron.Context, sess session.Store, needed []string) error {
+	// if we need to verify that it's a admin : admin.users
+
+	// We check if all the other need are filled
+	for _, need := range needed {
+		if !auth.IsGranted(need, sess) {
+			ctx.Data["message_categorie"] = "negative"
+			ctx.Data["message_icon"] = "warning sign"
+			ctx.Data["message_header"] = "Access forbidden"
+			ctx.Data["message_text"] = "It's seem you don't have the right to be there"
+			ctx.HTML(403, "other/message")
+			return errors.New("Not allowed")
+		}
+	}
+	return nil
 }

@@ -8,6 +8,7 @@ func initRbac() *gorbac.Rbac {
 	rbac.Set("user", []string{
 		"open.equipement", /* Can see any equipement */
 		"open.dashboard",  /* Can home dashboard */
+		"api.graph.ping",  /* Can graph ping time */
 	}, nil)
 	rbac.Set("admin", []string{
 		"add.equipement",    /* Add equipement to monitor */
@@ -17,6 +18,8 @@ func initRbac() *gorbac.Rbac {
 		"admin.dashboard",   /* Access admin dashboard */
 		"admin.equipements", /* Access admin equipements part */
 		"admin.users",       /* Access admin users part */
+		"api.network.ping",  /* Can do ping */
+		"api.network.snmp",  /* Can do snmp test */
 	}, []string{"user"})
 	rbac.Set("master", []string{}, []string{"admin"})
 	return rbac

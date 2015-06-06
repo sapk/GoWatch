@@ -9,7 +9,7 @@ import (
 
 // Ping ping the ip or hostname
 func Ping(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
-	if err := verificationAuth(ctx, auth, sess); err != nil {
+	if err := auth.VerificationAuth(ctx, sess, []string{"api.network.ping"}); err != nil {
 		return
 	}
 	hostorip := ctx.Req.URL.RawQuery
@@ -18,7 +18,7 @@ func Ping(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
 
 // SNMPTest the snmp service of the ip or hostname
 func SNMPTest(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
-	if err := verificationAuth(ctx, auth, sess); err != nil {
+	if err := auth.VerificationAuth(ctx, sess, []string{"api.network.snmp"}); err != nil {
 		return
 	}
 	hostorip := ctx.Query("host")
