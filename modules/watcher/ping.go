@@ -48,6 +48,7 @@ func PingTest(ip string, timeout time.Duration) <-chan PingResponse {
 func RegisterPingWatch(ip string, timeout time.Duration) <-chan PingResponse {
 	//TODO use a global event chan
 	out := make(chan PingResponse, 1)
+	log.Println("Adding ",ip, "to watch list")
 	//If ip is invali we do nothing except send a massaeg contian error
         if ok, _ := regexp.MatchString(tools.ValidIpAddressRegex, ip); !ok {
              out <- PingResponse{IP: ip, Result: false, Time: 0, Error : "Invalid IP"}
@@ -57,13 +58,16 @@ func RegisterPingWatch(ip string, timeout time.Duration) <-chan PingResponse {
 	//If we don't have it we make it
 	w.PingToListen.RLock()
         if ping, ok := w.PingToListen.m[ip]; !ok {
+                log.Println("Creating ",ip, " element to watch list for ", timeout)
 	        w.PingToListen.m[ip] = Ping{Start: time.Now(), Ch: out, Timeout: timeout, Send: make(map[int]PingSend)}
         }else if timeout==0 {
                 //If we register for unlimited listen and the ip is already in listen but not neccesrry in unltimate
+                log.Println("There is ",ip, " element setting him for unlimited ", timeout)
                 ping.Timeout = timeout
                 w.PingToListen.m[ip] = ping
         }else {
                 //We reset start counter for timeout
+                log.Println("There is ",ip, " element resseting him for ping at Start ", timeout)
                 ping.Start = time.Now()
                 w.PingToListen.m[ip] = ping
                 
@@ -76,6 +80,7 @@ func RegisterPingWatch(ip string, timeout time.Duration) <-chan PingResponse {
         		ClearPingIfNeeded(ip)
         	}()
         }
+        
 	return w.PingToListen.m[ip].Ch;
 }
 
@@ -212,7 +217,7 @@ func StartLoopPing() {
                                 //So we could send another
                                 //TODO make sure that we pass each step for each el so here we take amargin of /2  but could better if coudl ping at excatly Step bettween each 
                                 SendPing(ip);
-                                timetowait := (int64(rrd.Step*time.Second/2)/int64(len(w.PingToListen.m)))
+                                timetowait := (int64(rrd.Step*time.Second)/int64(len(w.PingToListen.m)))
                                 //log.Println("Wainting :",time.Duration(timetowait))
                                 time.Sleep(time.Duration(timetowait)) //scale for the number waiting
                         }else{

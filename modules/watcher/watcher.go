@@ -17,9 +17,11 @@ type CPingMap struct{
 }
 //Db represent the database
 type Watcher struct {
+        DB *db.Db
 	PingListener *icmp.PacketConn
 	PingToListen CPingMap
         PingSeq uint
+        PingChannels chan PingResponse
 }
 
 var w Watcher
@@ -37,50 +39,103 @@ func Init(d *db.Db) *Watcher {
 		log.Fatalf("listen err, %s", err)
 	}
 
-	w = Watcher{PingListener: c, PingToListen: CPingMap{m: make(map[string]Ping)}}
+	w = Watcher{PingListener: c,DB : d, PingToListen: CPingMap{m: make(map[string]Ping)}}
 
         StartPingWatcher()
         
-        count ,equipements := d.GetEquipements()
-        //var channels []chan PingResponse
-        channels := make([]<-chan PingResponse,count)
+        UpdatePingChannels()
+        //TODO stop and restart
         
-        for i, equi := range equipements {
-                //TODO keep the chan to log all responses
-                channels[i] = RegisterPingWatch(equi.IP, 0); //We add all equipement to continuous ping
+        StartLoopPing()
+	return &w
+}
+func UpdatePingChannels() {
+        
+        count ,equipements := w.DB.GetEquipements()
+        log.Println("There is ",count," elements in db")
+        
+        
+        //var channels []chan PingResponse
+        channels := make(map[string]<-chan PingResponse) //We reset completely the map
+        for _, eq := range equipements {
+                channels[eq.IP] = RegisterPingWatch(eq.IP, 0); //We add all equipement to continuous ping
         }
+
+        //Clearing PingToListen map from removed elements
+        w.PingToListen.RLock()
+        for ip, listen := range w.PingToListen.m {
+                //channels[strconv.FormatUint(eq.ID,10)] = RegisterPingWatch(eq.IP, 0); //We add all equipement to continuous ping
+                if listen.Timeout == 0 {
+                        //We only clear long running ping
+                        if _, ok := channels[ip]; !ok {
+                                //We  clear if it's not in long running ping
+                                delete(w.PingToListen.m, ip)
+                        }
+                }
+        }
+         w.PingToListen.RUnlock()
+        
+        if(w.PingChannels !=  nil){
+                close(w.PingChannels)//TODO use WaitGroup to close the go routine parsing the PingChannels
+        }
+        var outIsClosed *bool
+        w.PingChannels,outIsClosed = merge(channels)
         go func(){
-           for rep := range merge(channels...) {
-               // at each response
-               //TODO log
+           for {   
+               rep, ok := <- w.PingChannels
+               if !ok {
+                   log.Println("Done the chan must has been reset")
+                   *outIsClosed = true
+                   return
+               }
                log.Println(rep);
-               eq, _ := d.GetEquipementbyIP(db.Equipement{IP:rep.IP})
+               eq, _ := w.DB.GetEquipementbyIP(db.Equipement{IP:rep.IP}) //TODO check if it exist before logging
                //eq.Data=fmt.Sprintf("%v",rep)
                eq.Update()
                rrd.AddPing(strconv.FormatUint(eq.ID,10), rep.Time)
            }
         }()
-        
-        StartLoopPing()
-	return &w
 }
-
 //Get get the Watcher
 func Get() *Watcher {
 	return &w
 }
 
-func merge(cs ...<-chan PingResponse) <-chan PingResponse {
+func merge(cs map[string]<-chan PingResponse) (chan PingResponse, *bool) {
     var wg sync.WaitGroup
+    outIsClosed := false
     out := make(chan PingResponse)
 
     // Start an output goroutine for each input channel in cs.  output
     // copies values from c to out until c is closed, then calls wg.Done.
     output := func(c <-chan PingResponse) {
-        for n := range c {
-            out <- n
+        for {
+            n, ok := <- c
+            if !ok {
+                log.Println("This chan must has been close")
+                wg.Done()
+                return
+            }
+             if outIsClosed {
+                     log.Println("The output chan as been closed")
+                     wg.Done()// clear the wait group for closing all still open chan
+                     SendPing(n.IP)//We resend for any other chan taht will listen after
+                     return
+             }
+            /*
+            if  _, ok := <- out; !ok {
+                log.Println("The output chan as been closed")
+                for _, c := range cs {
+                        if _, ok := <- c; ok {
+                                wg.Done()// clear the wait group for closing all still open chan
+                        }
+                }
+                return;
+            }
+            */
+            out <- n 
+            
         }
-        wg.Done()
     }
     wg.Add(len(cs))
     for _, c := range cs {
@@ -91,7 +146,18 @@ func merge(cs ...<-chan PingResponse) <-chan PingResponse {
     // done.  This must start after the wg.Add call.
     go func() {
         wg.Wait()
-        close(out)
+        if !outIsClosed {
+                close(out)
+        }
     }()
-    return out
+    return out, &outIsClosed
 }
+
+
+
+
+
+
+
+
+

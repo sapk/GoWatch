@@ -11,7 +11,7 @@ import (
 
 // Dashboard genrate the home admin page
 func Dashboard(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
-	if err := verificationAuth(ctx, auth, sess); err != nil {
+	if err := verificationAuth(ctx, auth, sess, []string{"admin.dashboard"}); err != nil {
 		return
 	}
 	fillGlobalPage(ctx, db, "admin_dashboard")
@@ -27,7 +27,8 @@ func fillGlobalPage(ctx *macaron.Context, db *db.Db, page string) {
 	ctx.Data["equipements_count"] = db.NbEquipements()
 }
 
-func verificationAuth(ctx *macaron.Context, auth *auth.Auth, sess session.Store) error {
+func verificationAuth(ctx *macaron.Context, auth *auth.Auth, sess session.Store, needed []string) error {
+        // We verified that it's a admin 
 	if !auth.IsGranted("admin.users", sess) {
 		ctx.Data["message_categorie"] = "negative"
 		ctx.Data["message_icon"] = "warning sign"
@@ -36,5 +37,16 @@ func verificationAuth(ctx *macaron.Context, auth *auth.Auth, sess session.Store)
 		ctx.HTML(403, "other/message")
 		return errors.New("Not allowed")
 	}
+	// We check if all the other need are filled
+	for _, need := range needed {
+            if !auth.IsGranted(need, sess) {
+                ctx.Data["message_categorie"] = "negative"
+                ctx.Data["message_icon"] = "warning sign"
+                ctx.Data["message_header"] = "Access forbidden"
+                ctx.Data["message_text"] = "It's seem you don't have the right to be there"
+                ctx.HTML(403, "other/message")
+                return errors.New("Not allowed")
+            }
+        }
 	return nil
 }

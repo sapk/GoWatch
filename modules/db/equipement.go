@@ -74,13 +74,13 @@ func  posInSlice(slice []string,value string) int {
     return -1
 }
 // CreateUser verify the data and add a user
-func (db *Db) CreateEquipement(ip, host, typ string) error {
+func (db *Db) CreateEquipement(ip, host, typ string) (*Equipement, error) {
     log.Println("CreateEquipement : ", ip,host, typ)
     if ok, _ := regexp.MatchString(tools.ValidIpAddressRegex, ip); !ok {
-        return errors.New("IP invalid !")
+        return nil,errors.New("IP invalid !")
     }
     if ok, _ := regexp.MatchString(tools.ValidHostAddressRegex, host); !ok {
-        return errors.New("Host invalid !")
+        return nil,errors.New("Host invalid !")
     }
     //*
     log.Printf("Type : %v", typ)
@@ -88,7 +88,7 @@ func (db *Db) CreateEquipement(ip, host, typ string) error {
      
     idType := -1
     if idType = posInSlice(db.GetEquipementTypes(),typ);idType == -1 {
-        return errors.New("Type invalid !")
+        return nil,errors.New("Type invalid !")
     }
     //*/
     //TODo check if equipement exist (normaly done by the orm)
@@ -96,10 +96,11 @@ func (db *Db) CreateEquipement(ip, host, typ string) error {
     
     _, err := (*db.Orm).Insert(equi)
     if err != nil {
-        return err
+        return nil,err
     }
+    
     log.Printf("Equi %s created !", equi.Hostname)
-    return nil
+    return equi, nil
 }
 
 
