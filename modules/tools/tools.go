@@ -46,8 +46,8 @@ func TimeSinceHuman(start time.Time) string {
 	diff := time.Since(start)
 	days := int(diff.Hours() / 24)
 	hours := int(diff.Hours()) - 24*days
-	minutes := int(diff.Minutes()) - 24*days*60 - hours
-	seconds := int(diff.Seconds()) - 60*minutes - (24*days*60-hours)*60
+	minutes := int(diff.Minutes()) - (24*days+hours)*60
+	seconds := int(diff.Seconds()) - ((24*days+hours)*60+minutes)*60
 	switch {
 	case days > 0:
 		return fmt.Sprintf("%dD %dH", days, hours)

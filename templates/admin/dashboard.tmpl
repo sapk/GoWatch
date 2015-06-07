@@ -19,15 +19,15 @@
       <h3 class="ui top raised attached header">
         System Monitor
       </h3>
-      <div class="ui raised attached segment">
-        <div class="ui statistics">
-          <div class="statistic" style="width: 100%;">
+      <div class="ui raised attached segment grid">
+        <div class="ui statistics two column row ">
+          <div class="statistic column">
             <div class="text value" style="font-size: 42px; margin-bottom: -28px; padding: 11px 0px 0px;">{{.SysStatus.Uptime}}</div>
             <div class="label">
               App Uptime
             </div>
           </div>
-          <div class="statistic" style="width: 100%;">
+          <div class="statistic column">
             <div class="value">
               {{.SysStatus.NumGoroutine}}
             </div>
@@ -37,116 +37,122 @@
           </div>
         </div>
 
-        <div class="ui statistics mini">
-          <div class="statistic">
+        <div class="ui statistics six column row  mini">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.MemAllocated}}</div>
             <div class="label">Current Memory Usage</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.MemTotal}}</div>
             <div class="label">Total Memory Allocated</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.MemSys}}</div>
             <div class="label">Memory Obtained</div>
           </div>
-        <!--</div><div class="ui statistics mini">-->
-          <div class="statistic">
+        <!--</div><div class="ui statistics four column row  mini">-->
+          <div class="statistic column">
             <div class="value">{{.SysStatus.Lookups}}</div>
             <div class="label">Pointer Lookup Times</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.MemMallocs}}</div>
             <div class="label">Memory Allocate Times</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.MemFrees}}</div>
             <div class="label">Memory Free Times</div>
           </div>
-        </div><div class="ui statistics mini">
-          <div class="statistic">
+        </div><div class="ui statistics six column row  mini">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.HeapAlloc}}</div>
             <div class="label">Current Heap Usage</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.HeapSys}}</div>
             <div class="label">Heap Memory Obtained</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.HeapIdle}}</div>
             <div class="label">Heap Memory Idle</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.HeapInuse}}</div>
             <div class="label">Heap Memory In Use</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.HeapReleased}}</div>
             <div class="label">Heap Memory Released</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.HeapObjects}}</div>
             <div class="label">Heap Objects</div>
           </div>
-        </div><div class="ui statistics mini">
-          <div class="statistic">
+        </div><div class="ui statistics nine column row  mini">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.StackInuse}}</div>
             <div class="label">Bootstrap Stack Usage</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.StackSys}}</div>
             <div class="label">Stack Memory Obtained</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.MSpanInuse}}</div>
             <div class="label">MSpan Structures Usage</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.MSpanSys}}</div>
             <div class="label">MSpan Structures Obtained</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.MCacheInuse}}</div>
             <div class="label">MCache Structures Usage</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.MCacheSys}}</div>
             <div class="label">MSpan Structures Obtained</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.BuckHashSys}}</div>
             <div class="label">Profiling Bucket Hash Table Obtained</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.GCSys}}</div>
             <div class="label">GC Metadada Obtained</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.OtherSys}}</div>
             <div class="label">Other System Allocation Obtained</div>
           </div>
-        </div><div class="ui statistics mini">
-          <div class="statistic">
+        </div><div class="ui statistics five column row  mini">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.NextGC}}</div>
             <div class="label">Next GC Recycle</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.LastGC}}</div>
             <div class="label">Since Last GC Time</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.PauseTotalNs}}</div>
             <div class="label">Total GC Pause</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.PauseNs}}</div>
             <div class="label">Last GC Pause</div>
           </div>
-          <div class="statistic">
+          <div class="statistic column">
             <div class="value">{{.SysStatus.NumGC}}</div>
             <div class="label">GC Times</div>
           </div>
         </div>
+        <style>
+          .ui.statistics > .statistic {
+            margin: 0 0 1em !important;
+            max-width: none;
+          }
+        </style>
       </div>
     </div>
 </div>
