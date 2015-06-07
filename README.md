@@ -31,6 +31,10 @@ For optimization there is two types of analysis :
     - ...
 
 The admin dashboard show the medium interval between each scan of each type.
+
+## Requirement
+- librrd
+
 ## License
 
 This project is under the MIT License. See the [LICENSE](https://github.com/sapk/GoWatch/blob/master/LICENSE) file for the full license text.

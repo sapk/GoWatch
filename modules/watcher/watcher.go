@@ -93,10 +93,14 @@ func UpdatePingChannels() {
 				return
 			}
 			log.Println(rep)
-			eq, _ := w.DB.GetEquipementbyIP(db.Equipement{IP: rep.IP}) //TODO check if it exist before logging
+			eq, err := w.DB.GetEquipementbyIP(db.Equipement{IP: rep.IP}) //TODO check if it exist before logging
 			//eq.Data=fmt.Sprintf("%v",rep)
-			eq.Update()
-			rrd.AddPing(strconv.FormatUint(eq.ID, 10), rep.Time)
+			if err != nil {
+				log.Println("Not found in database : ", err)
+			} else {
+				eq.Update()
+				rrd.AddPing(strconv.FormatUint(eq.ID, 10), rep.Time)
+			}
 		}
 	}()
 }
