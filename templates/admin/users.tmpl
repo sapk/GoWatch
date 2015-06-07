@@ -6,8 +6,11 @@
 		{{template "admin/menu" .}}
 	</div>
     <div class="twelve wide column">
-<div class="ui raised segment">
-		<h3>Users :<a class="ui green button compact right floated" href="/admin/user/add"><i class="add user icon"></i> Add</a></h3>
+<h3 class="ui top raised attached header">
+  Users
+  <a class="ui green button compact right floated" href="/admin/user/add"><i class="add user icon"></i> Add</a>
+</h3>
+<div class="ui raised attached segment">
 <div class="ui cards four">
 		{{range .Users}}
 		<div class="card">

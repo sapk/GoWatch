@@ -61,6 +61,10 @@ table .right.aligned.collapsing .small{
     font-size: 75%;
     margin-top: -2px;
 }
+
+.top.attached.header{
+    background: rgba(0, 0, 0, 0.04) none repeat scroll 0% 0%;
+}
 /* Add icons */
 
 i.icon.router:before {
@@ -88,7 +92,7 @@ i.icon.firewall:before {
 }
 
 i.icon.others:before {
-  content: "\f1b2""; /* Cube */
+  content: "\f1b2"; /* Cube */
 }
 
 a.equipement > i.icon{
