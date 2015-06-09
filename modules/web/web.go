@@ -71,6 +71,7 @@ func Start(db *db.Db, watcher *watcher.Watcher, rrd *rrd.RRD) {
 		m.Get("/equipements", auth.IsLogged, admin.Equipements)
 		m.Get("/equipement/add", auth.IsLogged, admin.EquipementAdd)
 		m.Post("/equipement/add", auth.IsLogged, admin.EquipementAddPost)
+		m.Get("/equipement/add_multiples", auth.IsLogged, admin.EquipementAddMultiples)
 		m.Get("/equipement/:id([0-9]+)/del", auth.IsLogged, admin.EquipementDel)
 	})
 

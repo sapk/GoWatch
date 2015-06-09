@@ -87,7 +87,27 @@ func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db
 
 }
 
-// EquipementAdd generate the admin page for adding a user
+//EquipementAddMultiples generate the admin page for adding multiple equipements
+func EquipementAddMultiples(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
+	if err := auth.VerificationAuth(ctx, sess, []string{"add.equipement"}); err != nil {
+		return
+	}
+	fillGlobalPage(ctx, db, "admin_equipements")
+	//TODO ?	ctx.Data["organizations"] = auth.GetOrganizations()
+	//TODO ?	ctx.Data["locations"] = auth.GetLocations()
+	ctx.Data["types"] = db.GetEquipementTypes()
+
+	switch ctx.Query("by") {
+	case "ip_range":
+		ctx.HTML(200, "admin/add_equipements_by_ip_range")
+	case "dns_subdomain":
+		ctx.HTML(200, "admin/add_equipements_by_dns_subdomain")
+	default:
+		ctx.Error(404, "Not Found")
+	}
+}
+
+// EquipementAdd generate the admin page for adding a equipement
 func EquipementAdd(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
 	if err := auth.VerificationAuth(ctx, sess, []string{"add.equipement"}); err != nil {
 		return

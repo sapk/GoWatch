@@ -9,7 +9,24 @@
 <h3 class="ui top raised attached header">
   Equipements
   <a class="ui green button compact right floated" href="/admin/equipement/add" style="margin-top: -3px;"><i class="cube icon"></i>Add one</a>
-  <a class="ui green button compact right floated" style="margin-top: -3px;"><i class="cubes icon"></i>Add multiples</a>
+  <div class="ui searchable right floated dropdown labeled icon button green compact" style="margin-top: -3px;font-size: 1rem;">
+    <i class="cubes icon"></i>
+    <span class="text">Add multiples</span>
+    <div class="menu">
+      <div class="header">
+        Choose one method
+      </div>
+      <a class="item" href="/admin/equipement/add_multiples?by=ip_range">
+        <i class="search icon"></i>
+        By IP Range
+      </a>
+      <a class="item">
+        <i class="database icon" href="/admin/equipement/add_multiples?by=dns_subdomain"></i>
+        By DNS sub-domain
+      </a>
+    </div>
+  </div>
+  <script>$('.ui.dropdown').dropdown({action:"hide"});</script>
 </h3>
 <div class="ui raised attached segment">
         <table class="ui celled striped table">
