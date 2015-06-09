@@ -62,14 +62,14 @@
             </div>
 
             <!-- Result List -->
-            <table class="ui celled striped table" data-filter="only-available-filter">
+            <table class="ui celled striped compact table" data-filter="only-available-filter">
                 <thead>
                   <tr>
-                      <th>IP</th>
-                      <th>Ping</th>
-                      <th>Hostname</th>
-                      <th>SNMP</th>
-                      <th>Add</th>
+                      <th class="three wide">IP</th>
+                      <th class="one wide">Ping</th>
+                      <th class="nine wide">Hostname</th>
+                      <th class="one wide">SNMP</th>
+                      <th class="two wide">Add</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -96,6 +96,9 @@
             table[data-filter] tbody tr{
               display: none;
             }
+            .ui.compact.table tr td {
+                text-align: center;
+            }
             table[data-filter="all-filter"] tr{
               display: table-row !important;
             }
@@ -113,6 +116,7 @@
             }
           </style>
           <script>
+          var IPs = [];
           $(function(){
               //TODO check the ip_range format
               $('.ui.dropdown:not(#filter)').dropdown({action:"nothing"});
@@ -142,7 +146,6 @@
                 console.log(net);
                 console.log(net.network());
                 console.log(net.broadcast());
-                var IPs = [];
                 net.iter(function(ip,index) {
                   IPs.push({IP:ip});
                 });
@@ -153,34 +156,62 @@
                 $("#results").show();
 
                 var table = $("#results>table>tbody");
+                var html = "";
                 net.iter(function(ip,i) {
-                    table.append("<tr class='unknown-state' id='ip-"+ip._address.replace(/\./g,"-")+"'><td>"+ip+"</td><td><i class='help icon'></i></td><td></td><td></td><td>"+'<div class="ui toggle checkbox"><input type="checkbox"></div>'+"</td></tr>")
-                    window.setTimeout("pingCheck('"+ip+"');",250*i+0.1*IPs.length);
+                    html += ("<tr class='unknown-state' id='ip-"+ip._address.replace(/\./g,"-")+"'><td>"+ip+"</td><td id='ping-check'><i class='help icon'></i></td><td id='hostname'></td><td id='snmp-check'><i class='help icon'></i></td><td>"+'<div class="ui toggle checkbox fitted"><input type="checkbox"></div>'+"</td></tr>")
+                    window.setTimeout("pingCheck("+i+",'"+ip+"');",350*i+0.1*IPs.length);
+                    window.setTimeout("dnsCheck("+i+",'"+ip+"');",50+350*i+0.1*IPs.length);
+
                 });
+                table.append(html);
                 $('.ui.checkbox').checkbox();
                 return false;
               });
           });
-          function pingCheck(ip){
+          //TODO snmpCheck(ip)
+          //TODO better calculate progress
+          function dnsCheck(index,ip){
+            $.get("/api/network/reversedns",ip,function(d){
+              console.log(d);
+              var el = $("tr#ip-"+d.IP.replace(/\./g,"-"));
+              var host = $("tr#ip-"+d.IP.replace(/\./g,"-")+" td#hostname");
+              el.removeClass('unknown-state');
+              IPs[index].isReversed = true;
+              if(d.Result == false){
+                if(!el.hasClass("positive"))
+                  el.attr("class","warning none-available-state");
+                host.text("<i class='red delete icon'></i>")
+              }else{
+                el.attr("class","positive available-state");
+                host.text(d.Host)
+                $("tr#ip-"+d.IP.replace(/\./g,"-")+" .ui.checkbox").checkbox('check');
+              }
+            });
+          }
+          function pingCheck(index,ip){
             $.get("/api/network/ping",ip,function(d){
               console.log(d);
               var el = $("tr#ip-"+d.IP.replace(/\./g,"-"));
-              var ico = $("tr#ip-"+d.IP.replace(/\./g,"-")+" i.icon");
+              var ico = $("tr#ip-"+d.IP.replace(/\./g,"-")+" td#ping-check>i.icon");
               el.removeClass('unknown-state');
+              IPs[index].isPinged = true;
               $(".item#unknown-filter>span").text(parseInt($(".item#unknown-filter>span").text())-1)
               if(d.Result == false){
                 if(d.Error == ""){
-                  el.attr("class","warning none-available-state");
-                  ico.attr("class",'red deleted icon');
+                  if(!el.hasClass("positive"))
+                    el.attr("class","warning none-available-state");
+                  ico.attr("class",'red delete icon');
                   $(".item#none-available-filter>span").text(parseInt($(".item#none-available-filter>span").text())+1)
                 }else{
-                  el.attr("class","error none-available-state");
-                  ico.attr("class",'red deleted icon');
+                  if(!el.hasClass("positive"))
+                    el.attr("class","error none-available-state");
+                  ico.attr("class",'red delete icon');
                   $(".item#none-available-filter>span").text(parseInt($(".item#none-available-filter>span").text())+1)
                 }
               }else{
-                el.attr("class","success available-state");
+                el.attr("class","positive available-state");
                 ico.attr("class",'green check icon');
+                $("tr#ip-"+d.IP.replace(/\./g,"-")+" .ui.checkbox").checkbox('check');
                 $(".item#only-available-filter>span").text(parseInt($(".item#only-available-filter>span").text())+1)
               }
               var all = parseInt($(".item#all-filter>span").text());

@@ -77,6 +77,7 @@ func Start(db *db.Db, watcher *watcher.Watcher, rrd *rrd.RRD) {
 
 	m.Group("/api", func() {
 		m.Get("/network/ping", auth.IsLogged, api.Ping)
+		m.Get("/network/reversedns", auth.IsLogged, api.ReverseDNS)
 		m.Get("/network/snmptest", auth.IsLogged, api.SNMPTest)
 		m.Get("/graph/equipement/:id([0-9]+)/:duration.png", auth.IsLogged, api.GraphPing)
 	})

@@ -11,15 +11,16 @@ func initRbac() *gorbac.Rbac {
 		"api.graph.ping",  /* Can graph ping time */
 	}, nil)
 	rbac.Set("admin", []string{
-		"add.equipement",    /* Add equipement to monitor */
-		"del.equipement",    /* Remove equipement to monitor */
-		"add.user",          /* Add user */
-		"del.user",          /* Remove user */
-		"admin.dashboard",   /* Access admin dashboard */
-		"admin.equipements", /* Access admin equipements part */
-		"admin.users",       /* Access admin users part */
-		"api.network.ping",  /* Can do ping */
-		"api.network.snmp",  /* Can do snmp test */
+		"add.equipement",         /* Add equipement to monitor */
+		"del.equipement",         /* Remove equipement to monitor */
+		"add.user",               /* Add user */
+		"del.user",               /* Remove user */
+		"admin.dashboard",        /* Access admin dashboard */
+		"admin.equipements",      /* Access admin equipements part */
+		"admin.users",            /* Access admin users part */
+		"api.network.ping",       /* Can do ping */
+		"api.network.snmp",       /* Can do snmp test */
+		"api.network.reversedns", /* Can do reversedns */
 	}, []string{"user"})
 	rbac.Set("master", []string{}, []string{"admin"})
 	return rbac
