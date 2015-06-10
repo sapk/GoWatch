@@ -61,15 +61,27 @@
                 </div>
             </div>
 
+            <!-- Type list -->
+            <div class="ui floating labeled icon dropdown button" id="types">
+                <i class="bookmark icon"></i>
+                <span class="text">Default Type</span>
+                <div class="menu">
+                  {{range .types}}
+                    <div class="item" data-value="{{.}}">{{.}}</div>
+                  {{end}}
+                </div>
+            </div>
+
             <!-- Result List -->
             <table class="ui celled striped compact table" data-filter="only-available-filter">
                 <thead>
                   <tr>
                       <th class="three wide">IP</th>
                       <th class="one wide">Ping</th>
-                      <th class="nine wide">Hostname</th>
+                      <th class="eight wide">Hostname</th>
                       <th class="one wide">SNMP</th>
-                      <th class="two wide">Add</th>
+                      <th class="two wide">Groupe</th>
+                      <th class="one wide">Add</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -83,7 +95,9 @@
             </div>
           </div>
           <br>
-          <div onclick="$(this).parent().submit();" class="ui animated button green right floated"><div class="visible content">Scan</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
+          <div id="scan" onclick="$(this).parent().submit();" class="ui animated button green right floated"><div class="visible content">Scan</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
+          <div id="add-all" style="display:none;" onclick="" class="ui animated button green right floated"><div class="visible content">Add</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
+
           <script src="/lib/iplibjs/Base.min.js"></script>
           <script src="/lib/iplibjs/iplib.js"></script>
           <style>
@@ -114,12 +128,30 @@
             tr.unknown-state,tr.none-available-state {
               opacity: 0.5;
             }
+            .ui.form select {
+              padding: 0;
+            }
+            #results .ui.table tr td.error,#results .ui.table tr.error td {
+                background: #FFF0F0 none repeat scroll 0% 0% !important;
+                color: #CD2929 !important;
+            }
           </style>
           <script>
           var IPs = [];
+          var nbEquiToAdd;
           $(function(){
               //TODO check the ip_range format
-              $('.ui.dropdown:not(#filter)').dropdown({action:"nothing"});
+              $('#community.ui.dropdown').dropdown({action:"nothing"});
+              $('#types.ui.dropdown').dropdown({
+                action: function(value, text, $selectedItem) {
+                        $('#types.ui.dropdown>.text').html(value);
+                        $('#types.ui.dropdown').dropdown("hide")
+                        //$("table tr #type>select:not([data-value])").attr('data-value',value);
+                        console.log("table tr #type>select:not([data-value]) option:contains('"+value+"')",$("table tr #type>select:not([data-value]) option:contains('"+value+"')"))
+                        $("table tr #type>select:not([data-value]) option:contains('"+value+"')").prop('selected', true);
+                        //.attr('data-value',value);
+                      }
+                });
               $('#filter.ui.dropdown').dropdown(
                       {action: function(value, text, $selectedItem) {
                         $('#filter.ui.dropdown>.text').html(value);
@@ -139,7 +171,7 @@
                 $(this).parent().remove();
               });
         			$("form").on('submit', function(){
-                $(this).find('.animated.button.green').addClass('loading');
+                $(this).find('#scan.animated.button.green').addClass('loading');
                 network=$("input[name='ip_range']").val().split('/');
                 console.log(network);
                 var net = new IPv4Network(new IPv4(network[0]),new Subnet("/"+network[1]));
@@ -157,19 +189,92 @@
 
                 var table = $("#results>table>tbody");
                 var html = "";
+                var select = "<select><option></option>{{range .types}}<option>{{.}}</option>{{end}}</select>"
                 net.iter(function(ip,i) {
-                    html += ("<tr class='unknown-state' id='ip-"+ip._address.replace(/\./g,"-")+"'><td>"+ip+"</td><td id='ping-check'><i class='help icon'></i></td><td id='hostname'></td><td id='snmp-check'><i class='help icon'></i></td><td>"+'<div class="ui toggle checkbox fitted"><input type="checkbox"></div>'+"</td></tr>")
+                    html += ("<tr class='unknown-state' data-id='"+i+"' data-ip='"+ip._address+"' id='ip-"+ip._address.replace(/\./g,"-")+"'><td>"+ip+"</td><td id='ping-check'><i class='help icon'></i></td><td id='hostname'></td><td id='snmp-check'><i class='help icon'></i></td><td id='type'>"+select+"</td><td>"+'<div class="ui toggle checkbox fitted"><input type="checkbox"></div>'+"</td></tr>")
                     window.setTimeout("pingCheck("+i+",'"+ip+"');",350*i+0.1*IPs.length);
                     window.setTimeout("dnsCheck("+i+",'"+ip+"');",50+350*i+0.1*IPs.length);
 
                 });
                 table.append(html);
                 $('.ui.checkbox').checkbox();
+                /*
+                $("select").on('click','option', function(event){
+                  $(this).parent().attr("data-value",$(this).text());
+                })
+                */
+                $('#type>select').on('change', function() {
+                  $(this).attr("data-value",this.value);
+                });
                 return false;
+              });
+
+
+              $("#add-all.button").on('click', function(e){
+                var per = 1;
+                $("#add-all.button").addClass("loading");
+                $(".ui.progress>.bar").css("width",per+"%");
+                $(".ui.progress>.bar>.progress").text(per+"%");
+                $(".ui.progress").show();
+                $("#results table tbody tr").each(function(index,el){
+                  if($(el).find(".ui.checkbox").checkbox("is unchecked")){
+                    $(this).remove();
+                  }
+                });
+                //On affiche tous car il ne reste que les checked
+                $('#results table[data-filter]').attr("data-filter","all-filter");
+                console.log($("#results table tbody tr"));
+
+                nbEquiToAdd = $("#results table tbody tr").length;
+                $("#results table tbody tr").addClass("disabled").each(function(index,el){
+                    window.setTimeout("addEquipement("+$(this).attr('data-id')+",'"+$(this).attr('data-ip')+"');",2500*index);
+                });
+
               });
           });
           //TODO snmpCheck(ip)
           //TODO better calculate progress
+          function addEquipement(index,ip){
+            var el = $("tr#ip-"+ip.replace(/\./g,"-"));
+            console.log(el.attr("id"));
+            if(el.find("select").val()==""){
+              el.find("#type").addClass("error");
+              console.log("type invalide")
+              nbEquiToAdd--;
+
+              updateAddEqui();
+              return;
+            }
+            $.post("/admin/equipement/add", {iporhostname:ip,type:el.find("select").val()},function(d){
+              //console.log(d);
+              console.log($(d).find("form .ui.message.negative").text());
+
+              if($(d).find("form .ui.message.negative").length>0){
+                alert("IP : "+ip+" \n "+$(d).find("form .ui.message.negative").text())
+                nbEquiToAdd--;
+              }else {
+                el.remove();
+              }
+              updateAddEqui();
+            });
+          }
+          function updateAddEqui(){
+            if(nbEquiToAdd == 0){
+              $("#add-all.button").removeClass("loading");
+              $(".ui.progress").hide();
+              $("#results table tbody tr").removeClass("disabled")
+              return;
+            }
+            var per = (nbEquiToAdd-$("#results table tbody tr").length)/nbEquiToAdd
+            $(".ui.progress>.bar").css("width",per+"%");
+            $(".ui.progress>.bar>.progress").text(per.toFixed(0)+"%");
+            if(per==100 && $("#results table tbody tr").length>0){
+              //We need to redo some type must be invalid
+              $("#add-all.button").removeClass("loading");
+              $(".ui.progress").hide();
+              $("#results table tbody tr").removeClass("disabled")
+            }
+          }
           function dnsCheck(index,ip){
             $.get("/api/network/reversedns",ip,function(d){
               console.log(d);
@@ -178,14 +283,16 @@
               el.removeClass('unknown-state');
               IPs[index].isReversed = true;
               if(d.Result == false){
-                if(!el.hasClass("positive"))
-                  el.attr("class","warning none-available-state");
-                host.text("<i class='red delete icon'></i>")
+                  if(!el.hasClass("positive")){
+                    el.attr("class","warning none-available-state");
+                  }
+                  host.html("<i class='red delete icon'></i>")
               }else{
                 el.attr("class","positive available-state");
                 host.text(d.Host)
                 $("tr#ip-"+d.IP.replace(/\./g,"-")+" .ui.checkbox").checkbox('check');
               }
+              updateNumber()
             });
           }
           function pingCheck(index,ip){
@@ -195,32 +302,46 @@
               var ico = $("tr#ip-"+d.IP.replace(/\./g,"-")+" td#ping-check>i.icon");
               el.removeClass('unknown-state');
               IPs[index].isPinged = true;
-              $(".item#unknown-filter>span").text(parseInt($(".item#unknown-filter>span").text())-1)
               if(d.Result == false){
                 if(d.Error == ""){
                   if(!el.hasClass("positive"))
                     el.attr("class","warning none-available-state");
                   ico.attr("class",'red delete icon');
-                  $(".item#none-available-filter>span").text(parseInt($(".item#none-available-filter>span").text())+1)
                 }else{
                   if(!el.hasClass("positive"))
                     el.attr("class","error none-available-state");
                   ico.attr("class",'red delete icon');
-                  $(".item#none-available-filter>span").text(parseInt($(".item#none-available-filter>span").text())+1)
                 }
               }else{
                 el.attr("class","positive available-state");
                 ico.attr("class",'green check icon');
                 $("tr#ip-"+d.IP.replace(/\./g,"-")+" .ui.checkbox").checkbox('check');
-                $(".item#only-available-filter>span").text(parseInt($(".item#only-available-filter>span").text())+1)
               }
-              var all = parseInt($(".item#all-filter>span").text());
-              var unk = parseInt($(".item#unknown-filter>span").text());
-              var per = 100*(all-unk)/all;
-              //console.log(all,unk,per);
-              $(".ui.progress>.bar").css("width",per+"%");
-              $(".ui.progress>.bar>.progress").text(per.toFixed(0)+"%");
+
+              updateNumber()
             });
+          }
+
+          function updateNumber(){
+            $(".item#unknown-filter>span").text($("#results table tbody tr.unknown-state").length)
+            $(".item#only-available-filter>span").text($("#results table tbody tr.available-state").length)
+            $(".item#none-available-filter>span").text($("#results table tbody tr.none-available-state").length)
+
+            var all = parseInt($(".item#all-filter>span").text());
+            var unk = parseInt($(".item#unknown-filter>span").text()); //TODO perfect this with the arrayof needed
+            var per = 100*(all-unk)/all;
+            //console.log(all,unk,per);
+            $(".ui.progress>.bar").css("width",per+"%");
+            $(".ui.progress>.bar>.progress").text(per.toFixed(0)+"%");
+            if(per==100){
+
+              $(".ui.progress>.bar").css("width",0+"%");
+              $(".ui.progress>.bar>.progress").text(0+"%");
+              $(".ui.progress").hide();
+              window.setTimeout('$("#scan.button").hide();$("#add-all.button").show();',3*1000);
+              //Ready for add
+            }
+
           }
           </script>
         </form>
