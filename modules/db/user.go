@@ -24,6 +24,8 @@ type User struct {
 	Updated  time.Time `orm:"auto_now;type(datetime)"`
 }
 
+var containMaster bool
+
 //NbUsers return the number of user in database
 func (db *Db) NbUsers() int64 {
 	cnt, _ := (*db.Orm).QueryTable("user").Count() // SELECT COUNT(*) FROM USER
@@ -40,6 +42,10 @@ func (db *Db) GetUsers() (int64, []*User) {
 
 //ContainMaster verifiy if the master is in db (init)
 func (db *Db) ContainMaster() bool {
+	if containMaster == true {
+		return true
+	}
+
 	user := User{ID: 1}
 
 	err := (*db.Orm).Read(&user)
@@ -47,9 +53,10 @@ func (db *Db) ContainMaster() bool {
 	if err == orm.ErrNoRows {
 		return false
 	} else if err != nil {
-		log.Printf("Error : %v", err)
+		log.Printf("Error : %v", err) //TODO check for locked database
 		return false
 	} else {
+		containMaster = true
 		return true
 	}
 }
