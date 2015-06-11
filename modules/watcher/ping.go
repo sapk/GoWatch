@@ -32,7 +32,7 @@ type PingWatcher struct {
 //PingMap with mutex for concurrency
 type PingMap struct {
 	sync.RWMutex
-	m map[string]Ping
+	m map[string]*Ping
 }
 
 //Ping contain information about a runnnig ping
@@ -104,7 +104,7 @@ func initPingWatcher(d *db.Db) *PingWatcher {
 		log.Fatalf("listen err, %s", err)
 	}
 
-	pw = PingWatcher{PingListener: c, PingToListen: PingMap{m: make(map[string]Ping)}, PingSeq: 0, PingChannels: PingRequest{false, make(chan PingResponse)}}
+	pw = PingWatcher{PingListener: c, PingToListen: PingMap{m: make(map[string]*Ping)}, PingSeq: 0, PingChannels: PingRequest{false, make(chan PingResponse)}}
 
 	startPingWatcher()
 	startWatchLongRunningPing(d)
@@ -187,7 +187,6 @@ func startPingWatcher() {
 						ping.Ch.send(PingResponse{IP: ip, Result: true, Time: time.Since(send.at)})
 						log.Println("Clearing Seq for response receive :", ip, "Ping:", ping, "Seq", seq)
 						delete(ping.Send, seq)
-						pw.PingToListen.m[ip] = ping
 					}
 				}
 				pw.PingToListen.RUnlock()
@@ -242,8 +241,8 @@ func clearPingIfNeeded(ip string) {
 			}
 			delete(pw.PingToListen.m, ip)
 		} else {
-			//If it 's unlimited or not timeouted we save all changes
-			pw.PingToListen.m[ip] = ping
+			//If it 's unlimited or not timeouted we save all changes (doesn't needed anymore)
+			//pw.PingToListen.m[ip] = ping
 		}
 	}
 	pw.PingToListen.RUnlock()
@@ -308,7 +307,7 @@ func sendPing(ip string) int {
 		log.Printf("WriteTo err, %s", err)
 	} else {
 		ping.Send[seq] = PingSend{at: time.Now()}
-		pw.PingToListen.m[ip] = ping
+		//pw.PingToListen.m[ip] = ping
 	}
 
 	pw.PingToListen.RUnlock()
@@ -330,18 +329,16 @@ func registerPingWatch(ip string, timeout time.Duration, ch *PingRequest) error 
 		log.Println("Creating ", ip, " element to watch list for ", timeout)
 		ping := Ping{Ch: make(chanListPingRequest), Timeout: timeout, Send: make(map[int]PingSend)}
 		ping.Ch.add(ch)
-		pw.PingToListen.m[ip] = ping
+		pw.PingToListen.m[ip] = &ping
 	} else if timeout == 0 {
 		//If we register for unlimited listen and the ip is already in listen but not neccesrry in unltimate
 		log.Println("There is ", ip, " element setting him for unlimited ", timeout)
 		ping.Ch.add(ch) //This will add if not already in map
 		ping.Timeout = timeout
-		pw.PingToListen.m[ip] = ping
 	} else {
 		//If we have the element and it's finish
 		ping.Ch.add(ch) //This will add if not already in map
 		ping.Timeout = timeout
-		pw.PingToListen.m[ip] = ping
 	}
 
 	pw.PingToListen.RUnlock()
