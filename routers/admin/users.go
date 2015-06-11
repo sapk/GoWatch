@@ -25,7 +25,7 @@ func Users(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
 }
 
 // UserDel handle deletion of one user
-func UserDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.Db, x csrf.CSRF) {
+func UserDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, x csrf.CSRF) {
 	if err := auth.VerificationAuth(ctx, sess, []string{"del.user"}); err != nil {
 		return
 	}

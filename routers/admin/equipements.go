@@ -32,7 +32,7 @@ func Equipements(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
 }
 
 // EquipementDel handle deletion of one user
-func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.Db, x csrf.CSRF) {
+func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, x csrf.CSRF) {
 	if err := auth.VerificationAuth(ctx, sess, []string{"del.equipement"}); err != nil {
 		return
 	}

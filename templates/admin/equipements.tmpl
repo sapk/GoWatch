@@ -36,7 +36,7 @@
                 <th>IP</th>
                 <!--<th>Data</th>-->
                 <th>Created</th>
-                <th>Updated</th>
+                <th>LastActivity</th>
                 <th>Action</th>
             </tr>
           </thead>
@@ -51,7 +51,7 @@
                 <td>{{.IP}}</td>
                 <!--<td>{.Data}</td>-->
                 <td class="right aligned collapsing">{{.Created.Format "2006-01-02 15:04"}}</td>
-                <td class="right aligned collapsing">{{.UpdatedFormated}}</td>
+                <td class="right aligned collapsing">{{.LastActivityFormated}}</td>
                 <td class="right aligned collapsing">
                     <a class="ui icon button small" onclick="refresh(this,'{{.IP}}')">
                         <i class="refresh icon"></i>

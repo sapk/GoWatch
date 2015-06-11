@@ -23,10 +23,9 @@ import (
 )
 
 //Start init the web interface
-func Start(db *db.Db, watcher *watcher.Watcher, rrd *rrd.RRD) {
+func Start(watcher *watcher.Watcher, rrd *rrd.RRD) {
 
 	m := macaron.New()
-	m.Map(db)
 	m.Map(watcher)
 	m.Use(macaron.Logger())
 	m.Use(macaron.Gziper())
@@ -37,7 +36,7 @@ func Start(db *db.Db, watcher *watcher.Watcher, rrd *rrd.RRD) {
 	log.Println("Macaron initialised !")
 
 	m.Use(auth.Authentificator(auth.Options{
-		Provider: db,
+		Provider: db.Get(),
 	}))
 	log.Println("Auth initialised !")
 

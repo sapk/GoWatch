@@ -42,14 +42,14 @@ func init() {
 }
 
 //GetAll return listUser
-func GetAll() (int, Users) {
-	return NbUsers(), listUser
+func GetAll() (int, *Users) {
+	return NbUsers(), &listUser
 }
 
 //GetByID return user of id
-func GetByID(id uint64) (User, bool) {
+func GetByID(id uint64) (*User, bool) {
 	user, ok := listUser[id]
-	return user, ok
+	return &user, ok
 }
 
 //NbUsers return the number of User in database

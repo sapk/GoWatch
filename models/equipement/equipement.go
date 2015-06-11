@@ -54,14 +54,24 @@ func NbEquipements() int {
 }
 
 //GetAll return listEquipement
-func GetAll() (int, Equipements) {
-	return NbEquipements(), listEquipement
+func GetAll() (int, *Equipements) {
+	return NbEquipements(), &listEquipement
 }
 
 //GetByID return user of id
-func GetByID(id uint64) (Equipement, bool) {
+func GetByID(id uint64) (*Equipement, bool) {
 	user, ok := listEquipement[id]
-	return user, ok
+	return &user, ok
+}
+
+//GetByIP return user of id
+func GetByIP(ip string) (*Equipement, bool) {
+	for _, el := range listEquipement {
+		if el.dbPointer.IP == ip {
+			return &el, true
+		}
+	}
+	return nil, false
 }
 
 // CreateEquipement verify the data and add a user
@@ -98,37 +108,68 @@ func CreateEquipement(ip, host, typ string) error {
 }
 
 //ID return the ID of the Equipement
-func (eq *Equipement) ID() uint64 {
+func (eq Equipement) ID() uint64 {
 	return eq.dbPointer.ID
 }
 
 //Hostname return the Hostname of the Equipement
-func (eq *Equipement) Hostname() string {
+func (eq Equipement) Hostname() string {
 	return eq.dbPointer.Hostname
 }
 
+//IP return the IP of the Equipement
+func (eq Equipement) IP() string {
+	return eq.dbPointer.IP
+}
+
+//Created return the Created of the Equipement
+func (eq Equipement) Created() time.Time {
+	return eq.dbPointer.Created
+}
+
+//Updated return the Updated of the Equipement
+func (eq Equipement) Updated() time.Time {
+	return eq.dbPointer.Updated
+}
+
+//LastActivity return the LastActivity of the Equipement
+func (eq Equipement) LastActivity() time.Time {
+	return eq.dbPointer.LastActivity
+}
+
+//Data return the Data of the Equipement
+func (eq Equipement) Data() string {
+	return eq.dbPointer.Data
+}
+
 //GetTypeIcon return the class of icon for the Equipement
-func (eq *Equipement) GetTypeIcon() string {
+func (eq Equipement) GetTypeIcon() string {
 	return strings.ToLower(Types[eq.dbPointer.Type])
 }
 
 //UpdatedFormated return the update date formated
-func (eq *Equipement) UpdatedFormated() string {
+func (eq Equipement) UpdatedFormated() string {
 	sec := int(time.Since(eq.dbPointer.Updated).Seconds())
 	return (time.Duration(sec) * time.Second).String()
 }
 
+//LastActivityFormated return the update date formated
+func (eq Equipement) LastActivityFormated() string {
+	sec := int(time.Since(eq.dbPointer.LastActivity).Seconds())
+	return (time.Duration(sec) * time.Second).String()
+}
+
 //UpdateActivity update the equipement in database
-func (eq *Equipement) UpdateActivity() error {
+func (eq Equipement) UpdateActivity() error {
 	//_, err := (*db.Orm).Update(equi, "Data", "Updated")
 	//_, err := (*db.Orm).Update(eq, "Updated")
-	//TODO
+	//TODO save some time
 	eq.dbPointer.LastActivity = time.Now()
 	return nil
 }
 
 //Delete delete a Equipement in database
-func (eq *Equipement) Delete() error {
+func (eq Equipement) Delete() error {
 	//TODO
 	id := eq.ID()
 	err := db.DelEquipement(eq.dbPointer)

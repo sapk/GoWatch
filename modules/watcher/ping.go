@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sapk/GoWatch/modules/db"
+	"github.com/sapk/GoWatch/models/equipement"
 	"github.com/sapk/GoWatch/modules/rrd"
 	"github.com/sapk/GoWatch/modules/tools"
 
@@ -96,7 +96,7 @@ func (cs *chanListPingRequest) send(rep PingResponse) {
 }
 
 //PingWatcher init the a PingWatcher
-func initPingWatcher(d *db.Db) *PingWatcher {
+func initPingWatcher() *PingWatcher {
 	c, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	//c, err := icmp.ListenPacket("udp4", "0.0.0.0")
 
@@ -107,19 +107,19 @@ func initPingWatcher(d *db.Db) *PingWatcher {
 	pw = PingWatcher{PingListener: c, PingToListen: PingMap{m: make(map[string]*Ping)}, PingSeq: 0, PingChannels: PingRequest{false, make(chan PingResponse)}}
 
 	startPingWatcher()
-	startWatchLongRunningPing(d)
+	startWatchLongRunningPing()
 	startLoopPing()
 	return &pw
 }
 
 //startWatchLongRunningPing start the goroutine for parse pignResponse from long running
-func startWatchLongRunningPing(d *db.Db) {
+func startWatchLongRunningPing() {
 	//we take at startthe allready in db equipement
-	count, equipements := db.GetEquipements()
+	count, equipements := equipement.GetAll()
 	log.Println("There is ", count, " elements in db")
 
-	for _, eq := range equipements {
-		AddToPingLongRunningList(eq.IP)
+	for _, eq := range *equipements {
+		AddToPingLongRunningList(eq.IP())
 	}
 
 	//TODO goroutine parsing pw.PingChannels
@@ -130,16 +130,16 @@ func startWatchLongRunningPing(d *db.Db) {
 				log.Fatalln("The chan must has been reset") //Should not happen with the new implementation
 			}
 			log.Println(rep)
-			eq, err := db.GetEquipementbyIP(db.Equipement{IP: rep.IP}) //TODO check if it exist before logging
+			eq, ok := equipement.GetByIP(rep.IP) //TODO check if it exist before logging
 			//eq.Data=fmt.Sprintf("%v",rep)
-			if err != nil {
-				log.Println("Not found in database : ", err)
+			if !ok {
+				log.Println("Not found in database : ")
 				//We should remove it from the longrunning ping list
 				removeFromPingList(rep.IP)
 			} else {
 				if rep.Result == true {
-					//eq.Update() //TODO cache in order to not lock the db
-					rrd.AddPing(strconv.FormatUint(eq.ID, 10), rep.Time)
+					eq.UpdateActivity() //TODO cache in order to not lock the db
+					rrd.AddPing(strconv.FormatUint(eq.ID(), 10), rep.Time)
 				} else {
 					//Timeout
 				}

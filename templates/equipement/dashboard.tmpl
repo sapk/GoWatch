@@ -8,7 +8,7 @@
 	                <th>Hostname</th>
 	                <th>IP</th>
 	                <th>Created</th>
-	                <th>Updated</th>
+	                <th>LastActivity</th>
 	            </tr>
 	          </thead>
 	          <tbody>
@@ -21,7 +21,7 @@
 	                </td>
 	                <td>{{.IP}}</td>
 	                <td class="right aligned collapsing">{{.Created.Format "2006-01-02 15:04"}}</td>
-	                <td class="right aligned collapsing">{{.UpdatedFormated}}</td>
+	                <td class="right aligned collapsing">{{.LastActivityFormated}}</td>
 	            </tr>
 	            {{end}}
 	            </tbody>
