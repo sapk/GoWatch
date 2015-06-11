@@ -7,8 +7,9 @@ import (
 
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
+	"github.com/sapk/GoWatch/models/equipement"
+	"github.com/sapk/GoWatch/models/user"
 	"github.com/sapk/GoWatch/modules/auth"
-	"github.com/sapk/GoWatch/modules/db"
 	"github.com/sapk/GoWatch/modules/tools"
 )
 
@@ -99,21 +100,21 @@ func getSystemStatus() sysStatus {
 }
 
 // Dashboard genrate the home admin page
-func Dashboard(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
+func Dashboard(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
 	if err := auth.VerificationAuth(ctx, sess, []string{"admin.dashboard"}); err != nil {
 		return
 	}
-	fillGlobalPage(ctx, db, "admin_dashboard")
+	fillGlobalPage(ctx, "admin_dashboard")
 
 	ctx.Data["SysStatus"] = getSystemStatus()
 	ctx.HTML(200, "admin/dashboard")
 }
 
-func fillGlobalPage(ctx *macaron.Context, db *db.Db, page string) {
+func fillGlobalPage(ctx *macaron.Context, page string) {
 	ctx.Data["page_admin"] = true
 	if page != "" {
 		ctx.Data[page] = true
 	}
-	ctx.Data["users_count"] = db.NbUsers()
-	ctx.Data["equipements_count"] = db.NbEquipements()
+	ctx.Data["users_count"] = user.NbUsers()
+	ctx.Data["equipements_count"] = equipement.NbEquipements()
 }

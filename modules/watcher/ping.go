@@ -115,7 +115,7 @@ func initPingWatcher(d *db.Db) *PingWatcher {
 //startWatchLongRunningPing start the goroutine for parse pignResponse from long running
 func startWatchLongRunningPing(d *db.Db) {
 	//we take at startthe allready in db equipement
-	count, equipements := d.GetEquipements()
+	count, equipements := db.GetEquipements()
 	log.Println("There is ", count, " elements in db")
 
 	for _, eq := range equipements {
@@ -130,7 +130,7 @@ func startWatchLongRunningPing(d *db.Db) {
 				log.Fatalln("The chan must has been reset") //Should not happen with the new implementation
 			}
 			log.Println(rep)
-			eq, err := d.GetEquipementbyIP(db.Equipement{IP: rep.IP}) //TODO check if it exist before logging
+			eq, err := db.GetEquipementbyIP(db.Equipement{IP: rep.IP}) //TODO check if it exist before logging
 			//eq.Data=fmt.Sprintf("%v",rep)
 			if err != nil {
 				log.Println("Not found in database : ", err)

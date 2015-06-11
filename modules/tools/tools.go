@@ -12,6 +12,15 @@ const ValidIPAddressRegex = `(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.
 //ValidHostAddressRegex regex for validate HostAddress
 const ValidHostAddressRegex = `^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`
 
+//ValidUsernameRegex regex for validate Username
+const ValidUsernameRegex = "[a-z0-9_-]{3,16}"
+
+//ValidPasswordRegex regex for validate Password
+const ValidPasswordRegex = "[a-z0-9_-]{6,18}"
+
+//ValidEmailRegex regex for validate Email
+const ValidEmailRegex = "([a-z0-9_.-]+)@([a-z.-]+).([a-z]{2,6})"
+
 //(sources from gogs project)
 func logn(n, b float64) float64 {
 	return math.Log(n) / math.Log(b)
@@ -37,6 +46,26 @@ func humanateBytes(s uint64, base float64, sizes []string) string {
 func FileSize(s int64) string {
 	sizes := []string{"B", "KB", "MB", "GB", "TB", "PB", "EB"}
 	return humanateBytes(uint64(s), 1024, sizes)
+}
+
+//StringInSlice find a string in a []string
+func StringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+//PosInSlice find a string in a []string  adn return the pos or -1 if not found
+func PosInSlice(slice []string, value string) int {
+	for p, v := range slice {
+		if v == value {
+			return p
+		}
+	}
+	return -1
 }
 
 //TimeSinceHuman return a more human readable time duration

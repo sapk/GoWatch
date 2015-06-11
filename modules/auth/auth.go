@@ -10,6 +10,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/macaron-contrib/session"
 	"github.com/mikespook/gorbac"
+	"github.com/sapk/GoWatch/models/user"
 	"github.com/sapk/GoWatch/modules/db"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,7 +42,7 @@ func Authentificator(options ...Options) macaron.Handler {
 		//log.Printf("Uri : %v", ctx.Req.RequestURI != "/install")
 		//log.Printf("Containmaster : %v", (*auth.db).ContainMaster())
 		//TODO used a var in config
-		if !((*auth.db).ContainMaster()) && ctx.Req.RequestURI != "/install" {
+		if !(user.ContainMaster()) && ctx.Req.RequestURI != "/install" {
 			ctx.Redirect("/install")
 			return
 			//(*auth.db).CreateUser("master", "0000", "master", "master@localhost")
