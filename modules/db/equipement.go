@@ -34,7 +34,7 @@ func (db *Db) GetEquipement(equi Equipement) (*Equipement, error) {
 	return &equi, (*db.Orm).Read(&equi)
 }
 
-// GetEquipement return Equipement by param
+// GetEquipementbyIP return Equipement by param
 func (db *Db) GetEquipementbyIP(equi Equipement) (*Equipement, error) {
 	return &equi, (*db.Orm).Read(&equi, "IP")
 }

@@ -1,35 +1,45 @@
 package watcher
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
 	"log"
 	"net"
 	"os"
 	"regexp"
+	"strconv"
+	"sync"
 	"time"
 
+	"github.com/sapk/GoWatch/modules/db"
 	"github.com/sapk/GoWatch/modules/rrd"
 	"github.com/sapk/GoWatch/modules/tools"
-
-	"bytes"
-	"encoding/binary"
 
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/internal/iana"
 	"golang.org/x/net/ipv4"
 )
 
-const maxUniqePingTimeout = 15 * time.Second
+// PingWatcher represent the object used for watch ping
+type PingWatcher struct {
+	PingListener *icmp.PacketConn
+	PingToListen PingMap
+	PingSeq      uint
+	PingChannels PingRequest
+}
 
-//TODO mutex on listenpinglist
+//PingMap with mutex for concurrency
+type PingMap struct {
+	sync.RWMutex
+	m map[string]Ping
+}
 
-// PingResponse represent ip response and stats
-type PingResponse struct {
-	//TODO check PID for long running or multiple ping
-	IP     string
-	Result bool
-	Time   time.Duration
-	Error  string
+//Ping contain information about a runnnig ping
+type Ping struct {
+	Ch      chanListPingRequest
+	Send    map[int]PingSend
+	Timeout time.Duration // a infinite send will have 0 here
 }
 
 //PingSend format of a Ping send
@@ -37,142 +47,116 @@ type PingSend struct {
 	at time.Time
 }
 
-//Ping contain information about a runnnig ping
-type Ping struct {
-	Ch      tools.Broadcaster
-	Start   time.Time //TODO remove this and base calcul on Send[] average
-	Send    map[int]PingSend
-	Timeout time.Duration // a infinite send will have 0 here
+// PingResponse represent ip response and stats
+type PingResponse struct {
+	IP     string
+	Result bool
+	Time   time.Duration
+	Error  string
 }
 
-//PingTest execute a ping and return un litenerfor response
-func PingTest(ip string, timeout time.Duration) PingResponse {
-	ping, err := RegisterPingWatch(ip, timeout)
-	SendPing(ip)
-
-	if err != nil {
-		return PingResponse{IP: ip, Result: false, Time: 0, Error: err.Error()}
-	}
-
-	return ping.Read().(PingResponse)
+// PingRequest represent ip request
+type PingRequest struct {
+	isClose bool
+	ch      chan PingResponse
 }
 
-//RegisterPingWatch add to the watch list
-func RegisterPingWatch(ip string, timeout time.Duration) (*tools.BroadcastReceiver, error) {
-	//TODO use a global event chan
-	out := tools.NewBroadcaster()
-	log.Println("Adding ", ip, "to watch list")
-	//If ip is invali we do nothing except send a massaeg contian error
-	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
-		//out <- PingResponse{IP: ip, Result: false, Time: 0, Error: "Invalid IP"}
-		return nil, errors.New("Invalid IP")
-	}
+var pw PingWatcher
 
-	//If we don't have it we make it
-	w.PingToListen.RLock()
-	if ping, ok := w.PingToListen.m[ip]; !ok {
-		log.Println("Creating ", ip, " element to watch list for ", timeout)
-		w.PingToListen.m[ip] = Ping{Start: time.Now(), Ch: out, Timeout: timeout, Send: make(map[int]PingSend)}
-	} else if timeout == 0 {
-		//If we register for unlimited listen and the ip is already in listen but not neccesrry in unltimate
-		log.Println("There is ", ip, " element setting him for unlimited ", timeout)
-		ping.Timeout = timeout
-		w.PingToListen.m[ip] = ping
-	} else {
-		//We reset start counter for timeout
-		log.Println("There is ", ip, " element resseting him for ping at Start ", timeout)
-		ping.Start = time.Now()
-		w.PingToListen.m[ip] = ping
+const maxUniqePingTimeout = 15 * time.Second
 
+type chanListPingRequest map[int]*PingRequest
+
+func (cs *chanListPingRequest) add(c *PingRequest) {
+	if !cs.has(c) {
+		(*cs)[len(*cs)] = c
+		log.Println("Adding one chan to the chan list of listener")
 	}
-	w.PingToListen.RUnlock()
-	//Si le timeout est supérieur à 0 le minimum on active le timeout
-	if timeout > 0 {
-		go func() {
-			time.Sleep(timeout)
-			ClearPingIfNeeded(ip)
-		}()
-	}
-	listener := w.PingToListen.m[ip].Ch.Listen()
-	return &(listener), nil
 }
-
-//ClearPingIfNeeded analyze if we need to do clean of the ip related objects
-func ClearPingIfNeeded(ip string) {
-	w.PingToListen.RLock()
-	//Verify that it still exist
-	if ping, ok := w.PingToListen.m[ip]; ok {
-		//We verify that it doesn't become unlimited during the timeout
-		if ping.Timeout > 0 && time.Since(ping.Start) > ping.Timeout {
-			log.Println("Clearing IP:", ip, "Ping:", ping)
-			ping.Ch.Write(PingResponse{IP: ip, Result: false, Time: time.Since(ping.Start)})
-			delete(w.PingToListen.m, ip)
-		} else {
-			//If it 's unlimited or not timeouted we clear all Send maxuniqtimeouted
-			for seq, send := range ping.Send {
-				if time.Since(send.at) > maxUniqePingTimeout {
-					delete(ping.Send, seq)
-				}
-			}
-
-			w.PingToListen.m[ip] = ping
+func (cs *chanListPingRequest) has(c *PingRequest) bool {
+	for _, ch := range *cs {
+		if c == ch {
+			log.Println("Found the chan in the chan list")
+			return true
 		}
 	}
-	w.PingToListen.RUnlock()
+	return false
+}
+func (cs *chanListPingRequest) send(rep PingResponse) {
+	log.Println(len(*cs))
+	for id, req := range *cs {
+		log.Println("Trying to send to one chan", rep)
+		if req != nil && !req.isClose {
+			req.ch <- rep
+		} else {
+			log.Println("One chan seem to be dead removing it !")
+			delete(*cs, id) //TODO make sure it take in accoutn in pw
+		}
+	}
 }
 
-//SendPing send a ping packet
-func SendPing(ip string) int {
-	//TODO implement v6
-	//If ip is invali we do nothing
-	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
-		log.Println("Invalid IP")
-		return -1
-	}
+//PingWatcher init the a PingWatcher
+func initPingWatcher(d *db.Db) *PingWatcher {
+	c, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	//c, err := icmp.ListenPacket("udp4", "0.0.0.0")
 
-	w.PingToListen.RLock()
-	ping, ok := w.PingToListen.m[ip]
-	//If we don't wait for a response we don't send anything
-	if !ok {
-		log.Println("Don't send a Ping we don't listen to is response")
-		return -1
-	}
-	w.PingSeq++
-	seq := int(w.PingSeq) & 0xffff
-	wm := icmp.Message{
-		Type: ipv4.ICMPTypeEcho, Code: 0,
-		Body: &icmp.Echo{
-			ID: os.Getpid() & 0xffff, Seq: seq,
-			Data: []byte("COUCOU"),
-		},
-	}
-	wb, err := wm.Marshal(nil)
 	if err != nil {
-		log.Println(err)
+		log.Fatalf("listen err, %s", err)
 	}
 
-	log.Println("Sending ping to ", ip)
-	if _, err := w.PingListener.WriteTo(wb, &net.IPAddr{IP: net.ParseIP(ip)}); err != nil {
-		log.Printf("WriteTo err, %s", err)
-	} else {
-		ping.Send[seq] = PingSend{at: time.Now()}
-		w.PingToListen.m[ip] = ping
-	}
+	pw = PingWatcher{PingListener: c, PingToListen: PingMap{m: make(map[string]Ping)}, PingSeq: 0, PingChannels: PingRequest{false, make(chan PingResponse)}}
 
-	w.PingToListen.RUnlock()
-	return seq
+	startPingWatcher()
+	startWatchLongRunningPing(d)
+	startLoopPing()
+	return &pw
 }
 
-//StartPingWatcher start the goroutine for watch receiving of ping response
-func StartPingWatcher() {
+//startWatchLongRunningPing start the goroutine for parse pignResponse from long running
+func startWatchLongRunningPing(d *db.Db) {
+	//we take at startthe allready in db equipement
+	count, equipements := d.GetEquipements()
+	log.Println("There is ", count, " elements in db")
+
+	for _, eq := range equipements {
+		AddToPingLongRunningList(eq.IP)
+	}
+
+	//TODO goroutine parsing pw.PingChannels
+	go func() {
+		for {
+			rep, ok := <-pw.PingChannels.ch
+			if !ok {
+				log.Fatalln("The chan must has been reset") //Should not happen with the new implementation
+			}
+			log.Println(rep)
+			eq, err := d.GetEquipementbyIP(db.Equipement{IP: rep.IP}) //TODO check if it exist before logging
+			//eq.Data=fmt.Sprintf("%v",rep)
+			if err != nil {
+				log.Println("Not found in database : ", err)
+				//We should remove it from the longrunning ping list
+				removeFromPingList(rep.IP)
+			} else {
+				if rep.Result == true {
+					eq.Update()
+					rrd.AddPing(strconv.FormatUint(eq.ID, 10), rep.Time)
+				} else {
+					//Timeout
+				}
+			}
+		}
+	}()
+}
+
+//startPingWatcher start the goroutine for watch receiving of ping response
+func startPingWatcher() {
 
 	//Ping watcher
 	go func() {
-		//TODO clear PingTowatchList for timeout
 		for {
 			rb := make([]byte, 1500)
 
-			n, peer, err := w.PingListener.ReadFrom(rb)
+			n, peer, err := pw.PingListener.ReadFrom(rb)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -187,10 +171,10 @@ func StartPingWatcher() {
 				//http://www.hsc.fr/ressources/articles/protocoles/icmp/index.html
 				log.Printf("got reflection from %v", peer)
 				ip := peer.String()
-				ClearPingIfNeeded(ip) //do all the cleaning stuff for timeouted
+				clearPingIfNeeded(ip) //do all the cleaning stuff for timeouted
 
-				w.PingToListen.RLock()
-				if ping, ok := w.PingToListen.m[ip]; ok {
+				pw.PingToListen.RLock()
+				if ping, ok := pw.PingToListen.m[ip]; ok {
 					b, _ := rm.Body.Marshal(4)
 					buf := bytes.NewReader(b) // b is []byte
 					var uid, useq uint16
@@ -200,12 +184,13 @@ func StartPingWatcher() {
 					seq := int(useq)
 					if send, ok := ping.Send[seq]; ok {
 						log.Printf("Sending to chan for %v ...", ip)
-						ping.Ch.Write(PingResponse{IP: ip, Result: true, Time: time.Since(send.at)})
+						ping.Ch.send(PingResponse{IP: ip, Result: true, Time: time.Since(send.at)})
+						log.Println("Clearing Seq for response receive :", ip, "Ping:", ping, "Seq", seq)
 						delete(ping.Send, seq)
-						w.PingToListen.m[ip] = ping
+						pw.PingToListen.m[ip] = ping
 					}
 				}
-				w.PingToListen.RUnlock()
+				pw.PingToListen.RUnlock()
 			default:
 				//log.Printf("got %+v; want echo reply", rm)
 			}
@@ -214,32 +199,174 @@ func StartPingWatcher() {
 
 }
 
-//StartLoopPing start the go routing sending recursively ping for element in database
-func StartLoopPing() {
+//AddToPingLongRunningList AddToPingLongRunningList
+func AddToPingLongRunningList(ip string) {
+	err := registerPingWatch(ip, 0, &pw.PingChannels) //We add all equipement to continuous ping
+	if err != nil {
+		log.Println("error during registering long running ping", err)
+	}
+}
+
+//removeFromPingList RemoveFromPingList
+func removeFromPingList(ip string) {
+	pw.PingToListen.RLock()
+	if ping, ok := pw.PingToListen.m[ip]; ok {
+		for id := range ping.Ch {
+			//We don't close all chan because there are managed by upper call
+			delete(ping.Ch, id)
+		}
+		delete(pw.PingToListen.m, ip)
+	}
+	pw.PingToListen.RUnlock()
+}
+
+//clearPingIfNeeded analyze if we need to do clean of the ip related objects
+func clearPingIfNeeded(ip string) {
+	pw.PingToListen.RLock()
+	//Verify that it still exist
+	if ping, ok := pw.PingToListen.m[ip]; ok {
+		//We remove all timeouted packet send or maxuniqtimeouted for unlimitedping
+		for id, send := range ping.Send {
+			if (ping.Timeout > 0 && time.Since(send.at) > ping.Timeout) || ping.Timeout == 0 && time.Since(send.at) > maxUniqePingTimeout {
+				ping.Ch.send(PingResponse{IP: ip, Result: false, Time: time.Since(send.at)})
+				log.Println("Clearing Seq for timeout :", ip, "Ping:", ping, "Seq", id)
+				delete(ping.Send, id)
+			}
+		}
+		//If the ping isn't unlimited and we don't wait for ping anymore
+		if ping.Timeout > 0 && len(ping.Send) == 0 {
+			log.Println("Clearing IP:", ip, "Ping:", ping)
+			for id := range ping.Ch {
+				//We don't close all chan because there are managed by upper call
+				delete(ping.Ch, id)
+			}
+			delete(pw.PingToListen.m, ip)
+		} else {
+			//If it 's unlimited or not timeouted we save all changes
+			pw.PingToListen.m[ip] = ping
+		}
+	}
+	pw.PingToListen.RUnlock()
+}
+
+//startLoopPing start the go routing sending recursively ping for element in database
+func startLoopPing() {
 	//Loop ping
 	go func() {
-		//TODO support continuous ping
 		for {
-			//every maxUniqePingTimeout we check for timeout and clean the map
-			//time.Sleep(maxUniqePingTimeout)
-			//log.Println("Scanning PingToListen map:", w.PingToListen)
-			for ip := range w.PingToListen.m {
-				ClearPingIfNeeded(ip) //We do cleanup before every thing
-
-				w.PingToListen.RLock()
-				if ping, ok := w.PingToListen.m[ip]; ok && ping.Timeout == 0 && len(ping.Send) == 0 {
+			for ip := range pw.PingToListen.m {
+				clearPingIfNeeded(ip) //We do cleanup before every thing
+				//No need to lock
+				if ping, ok := pw.PingToListen.m[ip]; ok && ping.Timeout == 0 && len(ping.Send) == 0 {
 					//the pin has not been cleared and it's a contnious and we are not expecting a ping
 					//So we could send another
-					//TODO make sure that we pass each step for each el so here we take amargin of /2  but could better if coudl ping at excatly Step bettween each
-					SendPing(ip)
-					timetowait := (int64(rrd.Step*time.Second) / int64(len(w.PingToListen.m)))
+					sendPing(ip)
+					timetowait := (int64(rrd.Step*time.Second) / int64(len(pw.PingToListen.m)))
 					//log.Println("Wainting :",time.Duration(timetowait))
 					time.Sleep(time.Duration(timetowait)) //scale for the number waiting
 				} else {
-					log.Println("Skipping because it's not a continous ping or a ping is already pending", ip)
+					log.Println("Skipping because it's not a continous ping or a ping is already pending or deleted", ip)
+					time.Sleep(250 * time.Millisecond) //TODO scale for the number waiting
 				}
-				w.PingToListen.RUnlock()
 			}
 		}
 	}()
+}
+
+//sendPing send a ping packet
+func sendPing(ip string) int {
+	//TODO implement v6
+	//If ip is invali we do nothing
+	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
+		log.Println("Invalid IP")
+		return -1
+	}
+
+	pw.PingToListen.RLock()
+	ping, ok := pw.PingToListen.m[ip]
+	//If we don't wait for a response we don't send anything
+	if !ok {
+		log.Println("Don't send a Ping we don't listen to is response")
+		return -1
+	}
+	pw.PingSeq++
+	seq := int(pw.PingSeq) & 0xffff
+	wm := icmp.Message{
+		Type: ipv4.ICMPTypeEcho, Code: 0,
+		Body: &icmp.Echo{
+			ID: os.Getpid() & 0xffff, Seq: seq,
+			Data: []byte("COUCOU"),
+		},
+	}
+	wb, err := wm.Marshal(nil)
+	if err != nil {
+		log.Println(err)
+	}
+
+	log.Println("Sending ping to ", ip)
+	if _, err := pw.PingListener.WriteTo(wb, &net.IPAddr{IP: net.ParseIP(ip)}); err != nil {
+		log.Printf("WriteTo err, %s", err)
+	} else {
+		ping.Send[seq] = PingSend{at: time.Now()}
+		pw.PingToListen.m[ip] = ping
+	}
+
+	pw.PingToListen.RUnlock()
+	return seq
+}
+
+//registerPingWatch add to the watch list
+func registerPingWatch(ip string, timeout time.Duration, ch *PingRequest) error {
+	log.Println("Adding ", ip, "to watch list")
+	//If ip is invali we do nothing except send a massaeg contian error
+	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
+		//out <- PingResponse{IP: ip, Result: false, Time: 0, Error: "Invalid IP"}
+		return errors.New("Invalid IP")
+	}
+
+	//If we don't have it we make it
+	pw.PingToListen.RLock()
+	if ping, ok := pw.PingToListen.m[ip]; !ok {
+		log.Println("Creating ", ip, " element to watch list for ", timeout)
+		ping := Ping{Ch: make(chanListPingRequest), Timeout: timeout, Send: make(map[int]PingSend)}
+		ping.Ch.add(ch)
+		pw.PingToListen.m[ip] = ping
+	} else if timeout == 0 {
+		//If we register for unlimited listen and the ip is already in listen but not neccesrry in unltimate
+		log.Println("There is ", ip, " element setting him for unlimited ", timeout)
+		ping.Ch.add(ch) //This will add if not already in map
+		ping.Timeout = timeout
+		pw.PingToListen.m[ip] = ping
+	} else {
+		//If we have the element and it's finish
+		ping.Ch.add(ch) //This will add if not already in map
+		ping.Timeout = timeout
+		pw.PingToListen.m[ip] = ping
+	}
+
+	pw.PingToListen.RUnlock()
+	//Si le timeout est supérieur à 0 le minimum on active le timeout
+	if timeout > 0 {
+		go func() {
+			time.Sleep(timeout)
+			clearPingIfNeeded(ip)
+		}()
+	}
+	return nil
+}
+
+//PingTest execute a ping and return un litenerfor response
+func PingTest(ip string, timeout time.Duration) PingResponse {
+	ping := PingRequest{false, make(chan PingResponse)}
+	//defer close(ping) //TODO think about it
+	err := registerPingWatch(ip, timeout, &ping)
+	sendPing(ip)
+
+	if err != nil {
+		return PingResponse{IP: ip, Result: false, Time: 0, Error: err.Error()}
+	}
+
+	ret := <-ping.ch
+	ping.isClose = true
+	return ret
 }

@@ -82,7 +82,7 @@ func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db
 		ctx.Data["message_redirect"] = "/admin/equipements"
 		ctx.HTML(200, "other/message")
 		sess.Delete("crsf_equi_id")
-		watcher.UpdatePingChannels()
+		//watcher.UpdatePingChannels() //Now should be clean automaticaly
 	}
 
 }
@@ -175,7 +175,8 @@ func EquipementAddPost(ctx *macaron.Context, auth *auth.Auth, sess session.Store
 		ctx.HTML(200, "admin/add_equipement")
 		return
 	}
-	watcher.UpdatePingChannels()
+	//watcher.UpdatePingChannels()
+	watcher.AddToPingLongRunningList(ip)
 	/*
 	   watcher.Get().PingChannels[strconv.FormatUint(eq.ID,10)] = watcher.RegisterPingWatch(eq.IP, 0); //We add equipement to continuous ping
 	*/
