@@ -253,20 +253,26 @@ func startLoopPing() {
 	//Loop ping
 	go func() {
 		for {
-			for ip := range pw.PingToListen.m {
-				clearPingIfNeeded(ip) //We do cleanup before every thing
-				//No need to lock
-				if ping, ok := pw.PingToListen.m[ip]; ok && ping.Timeout == 0 && len(ping.Send) == 0 {
-					//the pin has not been cleared and it's a contnious and we are not expecting a ping
-					//So we could send another
-					sendPing(ip)
-					timetowait := (int64(rrd.Step*time.Second) / int64(len(pw.PingToListen.m)))
-					//log.Println("Wainting :",time.Duration(timetowait))
-					time.Sleep(time.Duration(timetowait) + 5*time.Millisecond) //scale for the number waiting
+			for ip, ping := range pw.PingToListen.m {
+				if ping.Timeout == 0 {
+					//it's a contnious and we clean only continus since other will be clean by timeout
+					clearPingIfNeeded(ip) //We do cleanup before every thing
+					//if ping, ok := pw.PingToListen.m[ip]; ok && len(ping.Send) == 0 {
+					if len(ping.Send) == 0 {
+						//the ping has not been cleared and  and we are not expecting a ping
+						//So we could send another
+						sendPing(ip)
+					} else {
+						log.Println("Skipping because a ping is already pending", ip)
+					}
 				} else {
+					//No cleaning in order to not block the map
 					log.Println("Skipping because it's not a continous ping or a ping is already pending or deleted", ip)
-					time.Sleep(500 * time.Millisecond) //TODO scale for the number waiting timelapse to not block the entire process
+					//					time.Sleep(500 * time.Millisecond) //TODO scale for the number waiting timelapse to not block the entire process
 				}
+				timetowait := (int64(rrd.Step*time.Second) / int64(len(pw.PingToListen.m)+1))
+				//log.Println("Wainting :",time.Duration(timetowait))
+				time.Sleep(time.Duration(timetowait) + 5*time.Millisecond) //scale for the number waiting
 			}
 		}
 	}()
