@@ -138,7 +138,7 @@ func startWatchLongRunningPing(d *db.Db) {
 				removeFromPingList(rep.IP)
 			} else {
 				if rep.Result == true {
-					eq.Update()
+					//eq.Update() //TODO cache in order to not lock the db
 					rrd.AddPing(strconv.FormatUint(eq.ID, 10), rep.Time)
 				} else {
 					//Timeout
@@ -262,10 +262,10 @@ func startLoopPing() {
 					sendPing(ip)
 					timetowait := (int64(rrd.Step*time.Second) / int64(len(pw.PingToListen.m)))
 					//log.Println("Wainting :",time.Duration(timetowait))
-					time.Sleep(time.Duration(timetowait)) //scale for the number waiting
+					time.Sleep(time.Duration(timetowait) + 5*time.Millisecond) //scale for the number waiting
 				} else {
 					log.Println("Skipping because it's not a continous ping or a ping is already pending or deleted", ip)
-					time.Sleep(250 * time.Millisecond) //TODO scale for the number waiting
+					time.Sleep(500 * time.Millisecond) //TODO scale for the number waiting timelapse to not block the entire process
 				}
 			}
 		}
@@ -330,15 +330,15 @@ func registerPingWatch(ip string, timeout time.Duration, ch *PingRequest) error 
 		ping := Ping{Ch: make(chanListPingRequest), Timeout: timeout, Send: make(map[int]PingSend)}
 		ping.Ch.add(ch)
 		pw.PingToListen.m[ip] = &ping
-	} else if timeout == 0 {
-		//If we register for unlimited listen and the ip is already in listen but not neccesrry in unltimate
-		log.Println("There is ", ip, " element setting him for unlimited ", timeout)
-		ping.Ch.add(ch) //This will add if not already in map
-		ping.Timeout = timeout
 	} else {
 		//If we have the element and it's finish
+		log.Println("There is ", ip, " element in the array")
 		ping.Ch.add(ch) //This will add if not already in map
-		ping.Timeout = timeout
+		if timeout == 0 {
+			ping.Timeout = timeout
+			log.Println(" ... setting him for unlimited ", timeout)
+		}
+		//ping.Timeout = timeout
 	}
 
 	pw.PingToListen.RUnlock()
