@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/sapk/GoWatch.png?label=ready&title=Ready)](https://waffle.io/sapk/GoWatch)
 # GoWatch [![Build Status](https://travis-ci.org/sapk/GoWatch.svg?branch=master)](https://travis-ci.org/sapk/GoWatch)
 Simple network visualizer
 ##### Still under development
