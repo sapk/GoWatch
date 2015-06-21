@@ -7,6 +7,8 @@
 	Eq Data : {{.equipement.Data}}<br>
 	Eq Created : {{.equipement.Created}}<br>
 	Eq Updated : {{.equipement.Updated}}<br>
+	Eq LastActivity : {{.equipement.LastActivity}}<br>
+
 	<img id="graph-minute" src="/api/graph/equipement/{{.equipement.ID}}/minute.png" onload="reload('#graph-minute','{{.equipement.ID}}','minute',10*1000)" />
 	<img id="graph-hour" src="/api/graph/equipement/{{.equipement.ID}}/hour.png" onload="reload('#graph-hour','{{.equipement.ID}}','hour',10*1000*3)" />
 	<img id="graph-day" src="/api/graph/equipement/{{.equipement.ID}}/day.png" onload="reload('#graph-day','{{.equipement.ID}}','day',10*1000*6*60/10)" />

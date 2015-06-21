@@ -1,0 +1,352 @@
+{{template "base/head" .}}
+<br><br>
+<div class="container" id="admin-users">
+<div class="ui grid">
+    <div class="four wide column">
+		{{template "admin/menu" .}}
+	</div>
+    <div class="twelve wide column">
+      <div class="ui raised segment">
+        <form class="ui form">
+          <h2 class="ui header">
+              <i class="add square icon"></i>
+              <div class="content">
+                Add equipements
+                <div class="sub header">Please enter the IP range use for administration.</div>
+              </div>
+            </h2>
+          <div class="ui divider"></div>
+          <div class="required field" id="ip_range">
+              <label>IP Range</label>
+              <div class="ui icon input"><input name="ip_range" placeholder="192.168.0.1/24" type="text"><i class="cubes icon"></i></div>
+          </div>
+          <div id="results" style="display:none;">
+            <!-- SNMP community list -->
+            <div class="ui floating labeled icon dropdown button" id="community">
+              <i class="add icon"></i>
+              <span class="text">SNMP community</span>
+              <div class="menu">
+                <div class="header">
+                  Add one community to check
+                </div>
+                <div class="ui left icon input" style="padding-right: 2.2rem;">
+                    <i class="find icon"></i>
+                    <input name="community" placeholder="public..." type="text" >
+                </div>
+                <div class="header">
+                  <i class="list icon"></i>
+                  SNMP community list
+                </div>
+                <div class="divider"></div>
+                <!--<div class="item"><i class="delete right floated icon"></i>public <span class="description">0 found</span></div>-->
+              </div>
+            </div>
+            <!-- Filter list by availability -->
+            <div class="ui floating labeled icon dropdown button" id="filter">
+                <i class="filter icon"></i>
+                <span class="text">Filter</span>
+                <div class="menu">
+                  <div class="item" id="all-filter">
+                    <span class="description right floated">0</span>All
+                  </div>
+                  <div class="item" id="only-available-filter">
+                    <span class="description right floated">0</span>Only available
+                  </div>
+                  <div class="item" id="none-available-filter">
+                    <span class="description right floated">0</span>None available
+                  </div>
+                  <div class="item" id="unknown-filter">
+                    <span class="description right floated">0</span>Unknown
+                  </div>
+                </div>
+            </div>
+
+            <!-- Type list -->
+            <div class="ui floating labeled icon dropdown button" id="types">
+                <i class="bookmark icon"></i>
+                <span class="text">Default Type</span>
+                <div class="menu">
+                  {{range .types}}
+                    <div class="item" data-value="{{.}}">{{.}}</div>
+                  {{end}}
+                </div>
+            </div>
+
+            <!-- Result List -->
+            <table class="ui celled striped compact table" data-filter="only-available-filter">
+                <thead>
+                  <tr>
+                      <th class="three wide">IP</th>
+                      <th class="one wide">Ping</th>
+                      <th class="eight wide">Hostname</th>
+                      <th class="one wide">SNMP</th>
+                      <th class="two wide">Groupe</th>
+                      <th class="one wide">Add</th>
+                  </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <br>
+            <div class="ui active progress teal">
+              <div class="bar">
+                <div class="progress"></div>
+              </div>
+            </div>
+          </div>
+          <br>
+          <div id="scan" onclick="$(this).parent().submit();" class="ui animated button green right floated"><div class="visible content">Scan</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
+          <div id="add-all" style="display:none;" onclick="" class="ui animated button green right floated"><div class="visible content">Add</div><div class="hidden content"><i class="right arrow icon"></i></div></div>
+
+          <script src="/lib/iplibjs/Base.min.js"></script>
+          <script src="/lib/iplibjs/iplib.js"></script>
+          <style>
+            .menu>.item:hover>.icon.delete{
+              color: #D95C5C !important;
+            }
+            .ui.floating.dropdown > .menu {
+              min-width: 180px;
+            }
+            table[data-filter] tbody tr{
+              display: none;
+            }
+            .ui.compact.table tr td {
+                text-align: center;
+            }
+            table[data-filter="all-filter"] tr{
+              display: table-row !important;
+            }
+            table[data-filter="unknown-filter"] tr.unknown-state{
+              display: table-row !important;
+            }
+            table[data-filter="none-available-filter"] tr.none-available-state{
+              display: table-row !important;
+            }
+            table[data-filter="only-available-filter"] tr.available-state{
+              display: table-row !important;
+            }
+            tr.unknown-state,tr.none-available-state {
+              opacity: 0.5;
+            }
+            .ui.form select {
+              padding: 0;
+            }
+            #results .ui.table tr td.error,#results .ui.table tr.error td {
+                background: #FFF0F0 none repeat scroll 0% 0% !important;
+                color: #CD2929 !important;
+            }
+          </style>
+          <script>
+          var IPs = [];
+          var nbEquiToAdd;
+          $(function(){
+              //TODO check the ip_range format
+              $('#community.ui.dropdown').dropdown({action:"nothing"});
+              $('#types.ui.dropdown').dropdown({
+                action: function(value, text, $selectedItem) {
+                        $('#types.ui.dropdown>.text').html(value);
+                        $('#types.ui.dropdown').dropdown("hide")
+                        //$("table tr #type>select:not([data-value])").attr('data-value',value);
+                        console.log("table tr #type>select:not([data-value]) option:contains('"+value+"')",$("table tr #type>select:not([data-value]) option:contains('"+value+"')"))
+                        $("table tr #type>select:not([data-value]) option:contains('"+value+"')").prop('selected', true);
+                        //.attr('data-value',value);
+                      }
+                });
+              $('#filter.ui.dropdown').dropdown(
+                      {action: function(value, text, $selectedItem) {
+                        $('#filter.ui.dropdown>.text').html(value);
+                        $('table[data-filter]').attr("data-filter",text.slice(text.lastIndexOf(">")+1).replace(" ","-")+"-filter");
+                        //$('#filter.ui.dropdown>.menu').hide().removeClass("visible");
+                        $('#filter.ui.dropdown').dropdown("hide")
+                      }
+              });
+
+              $("input[name='community']").on('keyup', function(e){
+                if(e.keyCode == 13) {
+                  $(this).parent().parent().append('<div class="item"><i class="delete right floated icon"></i>'+$(this).val()+'<span class="description">0 found</span></div>');
+                  $(this).val("");
+                }
+              });
+              $(".menu").on('click', ".item>.icon.delete",function(e){
+                $(this).parent().remove();
+              });
+        			$("form").on('submit', function(){
+                $(this).find('#scan.animated.button.green').addClass('loading');
+                network=$("input[name='ip_range']").val().split('/');
+                console.log(network);
+                var net = new IPv4Network(new IPv4(network[0]),new Subnet("/"+network[1]));
+                console.log(net);
+                console.log(net.network());
+                console.log(net.broadcast());
+                net.iter(function(ip,index) {
+                  IPs.push({IP:ip});
+                });
+                //console.log(IPs);
+
+                $("#all-filter>span").text(IPs.length)
+                $("#unknown-filter>span").text(IPs.length)
+                $("#results").show();
+
+                var table = $("#results>table>tbody");
+                var html = "";
+                var select = "<select><option></option>{{range .types}}<option>{{.}}</option>{{end}}</select>"
+                net.iter(function(ip,i) {
+                    html += ("<tr class='unknown-state' data-id='"+i+"' data-ip='"+ip._address+"' id='ip-"+ip._address.replace(/\./g,"-")+"'><td>"+ip+"</td><td id='ping-check'><i class='help icon'></i></td><td id='hostname'></td><td id='snmp-check'><i class='help icon'></i></td><td id='type'>"+select+"</td><td>"+'<div class="ui toggle checkbox fitted"><input type="checkbox"></div>'+"</td></tr>")
+                    window.setTimeout("pingCheck("+i+",'"+ip+"');",350*i+0.1*IPs.length);
+                    window.setTimeout("dnsCheck("+i+",'"+ip+"');",50+350*i+0.1*IPs.length);
+
+                });
+                table.append(html);
+                $('.ui.checkbox').checkbox();
+                /*
+                $("select").on('click','option', function(event){
+                  $(this).parent().attr("data-value",$(this).text());
+                })
+                */
+                $('#type>select').on('change', function() {
+                  $(this).attr("data-value",this.value);
+                });
+                return false;
+              });
+
+
+              $("#add-all.button").on('click', function(e){
+                var per = 1;
+                $("#add-all.button").addClass("loading");
+                $(".ui.progress>.bar").css("width",per+"%");
+                $(".ui.progress>.bar>.progress").text(per+"%");
+                $(".ui.progress").show();
+                $("#results table tbody tr").each(function(index,el){
+                  if($(el).find(".ui.checkbox").checkbox("is unchecked")){
+                    $(this).remove();
+                  }
+                });
+                //On affiche tous car il ne reste que les checked
+                $('#results table[data-filter]').attr("data-filter","all-filter");
+                console.log($("#results table tbody tr"));
+
+                nbEquiToAdd = $("#results table tbody tr").length;
+                $("#results table tbody tr").addClass("disabled").each(function(index,el){
+                    window.setTimeout("addEquipement("+$(this).attr('data-id')+",'"+$(this).attr('data-ip')+"');",2500*index);
+                });
+
+              });
+          });
+          //TODO snmpCheck(ip)
+          //TODO better calculate progress
+          function addEquipement(index,ip){
+            var el = $("tr#ip-"+ip.replace(/\./g,"-"));
+            console.log(el.attr("id"));
+            if(el.find("select").val()==""){
+              el.find("#type").addClass("error");
+              console.log("type invalide")
+              nbEquiToAdd--;
+
+              updateAddEqui();
+              return;
+            }
+            $.post("/admin/equipement/add", {iporhostname:ip,type:el.find("select").val()},function(d){
+              //console.log(d);
+              console.log($(d).find("form .ui.message.negative").text());
+
+              if($(d).find("form .ui.message.negative").length>0){
+                alert("IP : "+ip+" \n "+$(d).find("form .ui.message.negative").text())
+                nbEquiToAdd--;
+              }else {
+                el.remove();
+              }
+              updateAddEqui();
+            });
+          }
+          function updateAddEqui(){
+            if(nbEquiToAdd == 0){
+              $("#add-all.button").removeClass("loading");
+              $(".ui.progress").hide();
+              $("#results table tbody tr").removeClass("disabled")
+              return;
+            }
+            var per = (nbEquiToAdd-$("#results table tbody tr").length)/nbEquiToAdd
+            $(".ui.progress>.bar").css("width",per+"%");
+            $(".ui.progress>.bar>.progress").text(per.toFixed(0)+"%");
+            if(per==100 && $("#results table tbody tr").length>0){
+              //We need to redo some type must be invalid
+              $("#add-all.button").removeClass("loading");
+              $(".ui.progress").hide();
+              $("#results table tbody tr").removeClass("disabled")
+            }
+          }
+          function dnsCheck(index,ip){
+            $.get("/api/network/reversedns",ip,function(d){
+              console.log(d);
+              var el = $("tr#ip-"+d.IP.replace(/\./g,"-"));
+              var host = $("tr#ip-"+d.IP.replace(/\./g,"-")+" td#hostname");
+              el.removeClass('unknown-state');
+              IPs[index].isReversed = true;
+              if(d.Result == false){
+                  if(!el.hasClass("positive")){
+                    el.attr("class","warning none-available-state");
+                  }
+                  host.html("<i class='red delete icon'></i>")
+              }else{
+                el.attr("class","positive available-state");
+                host.text(d.Host)
+                $("tr#ip-"+d.IP.replace(/\./g,"-")+" .ui.checkbox").checkbox('check');
+              }
+              updateNumber()
+            });
+          }
+          function pingCheck(index,ip){
+            $.get("/api/network/ping",ip,function(d){
+              console.log(d);
+              var el = $("tr#ip-"+d.IP.replace(/\./g,"-"));
+              var ico = $("tr#ip-"+d.IP.replace(/\./g,"-")+" td#ping-check>i.icon");
+              el.removeClass('unknown-state');
+              IPs[index].isPinged = true;
+              if(d.Result == false){
+                if(d.Error == ""){
+                  if(!el.hasClass("positive"))
+                    el.attr("class","warning none-available-state");
+                  ico.attr("class",'red delete icon');
+                }else{
+                  if(!el.hasClass("positive"))
+                    el.attr("class","error none-available-state");
+                  ico.attr("class",'red delete icon');
+                }
+              }else{
+                el.attr("class","positive available-state");
+                ico.attr("class",'green check icon');
+                $("tr#ip-"+d.IP.replace(/\./g,"-")+" .ui.checkbox").checkbox('check');
+              }
+
+              updateNumber()
+            });
+          }
+
+          function updateNumber(){
+            $(".item#unknown-filter>span").text($("#results table tbody tr.unknown-state").length)
+            $(".item#only-available-filter>span").text($("#results table tbody tr.available-state").length)
+            $(".item#none-available-filter>span").text($("#results table tbody tr.none-available-state").length)
+
+            var all = parseInt($(".item#all-filter>span").text());
+            var unk = parseInt($(".item#unknown-filter>span").text()); //TODO perfect this with the arrayof needed
+            var per = 100*(all-unk)/all;
+            //console.log(all,unk,per);
+            $(".ui.progress>.bar").css("width",per+"%");
+            $(".ui.progress>.bar>.progress").text(per.toFixed(0)+"%");
+            if(per==100){
+
+              $(".ui.progress>.bar").css("width",0+"%");
+              $(".ui.progress>.bar>.progress").text(0+"%");
+              $(".ui.progress").hide();
+              window.setTimeout('$("#scan.button").hide();$("#add-all.button").show();',3*1000);
+              //Ready for add
+            }
+
+          }
+          </script>
+        </form>
+      </div>
+	 </div>
+  </div>
+</div>
+{{template "base/footer" .}}

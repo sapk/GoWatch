@@ -5,23 +5,23 @@ import (
 	"strconv"
 
 	"github.com/Unknwon/macaron"
-	"github.com/sapk/GoWatch/modules/db"
+	"github.com/sapk/GoWatch/models/equipement"
 	//"github.com/macaron-contrib/session"
 )
 
 //Dashboard render the dashboard of equipements
-func Dashboard(ctx *macaron.Context, dbb *db.Db) {
-	ctx.Data["equipements_count"], ctx.Data["Equipements"] = dbb.GetEquipements()
-	ctx.Data["EquipementTypes"] = dbb.GetEquipementTypes()
+func Dashboard(ctx *macaron.Context) {
+	ctx.Data["equipements_count"], ctx.Data["Equipements"] = equipement.GetAll()
+	ctx.Data["EquipementTypes"] = equipement.Types
 	ctx.HTML(200, "equipement/dashboard")
 }
 
 //View render the view of a equipement
-func View(ctx *macaron.Context, dbb *db.Db) {
+func View(ctx *macaron.Context) {
 	id, _ := strconv.ParseUint(ctx.Params(":id"), 10, 64)
-	eq, err := dbb.GetEquipement(db.Equipement{ID: id})
+	eq, ok := equipement.GetByID(id)
 
-	if err != nil {
+	if !ok {
 		ctx.Data["message_categorie"] = "negative"
 		ctx.Data["message_icon"] = "server"
 		ctx.Data["message_header"] = "Equipement not found !"

@@ -11,6 +11,7 @@ import (
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/csrf"
 	"github.com/macaron-contrib/session"
+	"github.com/sapk/GoWatch/models/equipement"
 	"github.com/sapk/GoWatch/modules/auth"
 	"github.com/sapk/GoWatch/modules/db"
 	"github.com/sapk/GoWatch/modules/tools"
@@ -18,26 +19,26 @@ import (
 )
 
 // Equipements generate the admin page for Equipement management
-func Equipements(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
+func Equipements(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
 
 	if err := auth.VerificationAuth(ctx, sess, []string{"admin.equipements"}); err != nil {
 		return
 	}
-	fillGlobalPage(ctx, db, "admin_equipements")
-	ctx.Data["equipements_count"], ctx.Data["Equipements"] = db.GetEquipements()
-	ctx.Data["EquipementTypes"] = db.GetEquipementTypes()
+	fillGlobalPage(ctx, "admin_equipements")
+	ctx.Data["equipements_count"], ctx.Data["Equipements"] = equipement.GetAll()
+	ctx.Data["EquipementTypes"] = equipement.Types
 	ctx.HTML(200, "admin/equipements")
 	//TODO representation in tmeplate
 }
 
 // EquipementDel handle deletion of one user
-func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.Db, x csrf.CSRF) {
+func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, x csrf.CSRF) {
 	if err := auth.VerificationAuth(ctx, sess, []string{"del.equipement"}); err != nil {
 		return
 	}
 	id, _ := strconv.ParseUint(ctx.Params(":id"), 10, 64)
-	equi, err := dbb.GetEquipement(db.Equipement{ID: id})
-	if err != nil {
+	equi, ok := equipement.GetByID(id)
+	if !ok {
 		ctx.Data["message_categorie"] = "negative"
 		ctx.Data["message_icon"] = "server"
 		ctx.Data["message_header"] = "Equipement not found !"
@@ -50,13 +51,13 @@ func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db
 		ctx.Data["message_icon"] = "server"
 		ctx.Data["message_header"] = "Confirm equipement deletion!"
 		ctx.Data["csrf_token"] = csrf.GenerateToken("8e82e24bca448c990f69f5c364fc15ae", string(sess.Get("user").(db.User).ID), "del.equipement")
-		sess.Set("crsf_equi_id", equi.ID)
-		ctx.Data["message_text"] = strings.Join([]string{"Do you really want to delete : ", equi.Hostname}, " ")
+		sess.Set("crsf_equi_id", equi.ID())
+		ctx.Data["message_text"] = strings.Join([]string{"Do you really want to delete : ", equi.Hostname()}, " ")
 
 		ctx.HTML(200, "other/confirmation")
 	} else {
 		// We del the user if all is good
-		if sess.Get("crsf_equi_id") != equi.ID {
+		if sess.Get("crsf_equi_id") != equi.ID() {
 			ctx.Data["message_categorie"] = "negative"
 			ctx.Data["message_icon"] = "server"
 			ctx.Data["message_header"] = "Hummm ..."
@@ -82,25 +83,45 @@ func EquipementDel(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db
 		ctx.Data["message_redirect"] = "/admin/equipements"
 		ctx.HTML(200, "other/message")
 		sess.Delete("crsf_equi_id")
-		watcher.UpdatePingChannels()
+		//watcher.UpdatePingChannels() //Now should be clean automaticaly
 	}
 
 }
 
-// EquipementAdd generate the admin page for adding a user
-func EquipementAdd(ctx *macaron.Context, auth *auth.Auth, sess session.Store, db *db.Db) {
+//EquipementAddMultiples generate the admin page for adding multiple equipements
+func EquipementAddMultiples(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
 	if err := auth.VerificationAuth(ctx, sess, []string{"add.equipement"}); err != nil {
 		return
 	}
-	fillGlobalPage(ctx, db, "admin_equipements")
+	fillGlobalPage(ctx, "admin_equipements")
 	//TODO ?	ctx.Data["organizations"] = auth.GetOrganizations()
 	//TODO ?	ctx.Data["locations"] = auth.GetLocations()
-	ctx.Data["types"] = db.GetEquipementTypes()
+	ctx.Data["types"] = equipement.Types
+
+	switch ctx.Query("by") {
+	case "ip_range":
+		ctx.HTML(200, "admin/add_equipements_by_ip_range")
+	case "dns_subdomain":
+		ctx.HTML(200, "admin/add_equipements_by_dns_subdomain")
+	default:
+		ctx.Error(404, "Not Found")
+	}
+}
+
+// EquipementAdd generate the admin page for adding a equipement
+func EquipementAdd(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
+	if err := auth.VerificationAuth(ctx, sess, []string{"add.equipement"}); err != nil {
+		return
+	}
+	fillGlobalPage(ctx, "admin_equipements")
+	//TODO ?	ctx.Data["organizations"] = auth.GetOrganizations()
+	//TODO ?	ctx.Data["locations"] = auth.GetLocations()
+	ctx.Data["types"] = equipement.Types
 	ctx.HTML(200, "admin/add_equipement")
 }
 
 // EquipementAddPost handle the adding of a user
-func EquipementAddPost(ctx *macaron.Context, auth *auth.Auth, sess session.Store, dbb *db.Db) {
+func EquipementAddPost(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
 	//TODO add support for adding wildcard dns (find host in DNS) && support ip scan of range
 	//TODO convert hostname to IP
 	//TODO use config for DNS resolver if it'snt host
@@ -139,23 +160,24 @@ func EquipementAddPost(ctx *macaron.Context, auth *auth.Auth, sess session.Store
 
 	log.Println("CreateEquipement : ", ip, host, ctx.Query("type"))
 	if err == nil {
-		_, err = dbb.CreateEquipement(ip, host, ctx.Query("type"))
+		err = equipement.CreateEquipement(ip, host, ctx.Query("type"))
 		log.Println("Err : ", err)
 	}
 
 	log.Println("Err : ", err)
 	if err != nil {
 		log.Println("Equipement add failed !")
-		fillGlobalPage(ctx, dbb, "admin_equipements")
+		fillGlobalPage(ctx, "admin_equipements")
 		//TODO ?    ctx.Data["organizations"] = auth.GetOrganizations()
 		//TODO ?    ctx.Data["locations"] = auth.GetLocations()
-		ctx.Data["types"] = dbb.GetEquipementTypes()
+		ctx.Data["types"] = equipement.Types
 		ctx.Data["EquipementAddError"] = true
 		ctx.Data["EquipementAddErrorText"] = err.Error()
 		ctx.HTML(200, "admin/add_equipement")
 		return
 	}
-	watcher.UpdatePingChannels()
+	//watcher.UpdatePingChannels()
+	watcher.AddToPingLongRunningList(ip)
 	/*
 	   watcher.Get().PingChannels[strconv.FormatUint(eq.ID,10)] = watcher.RegisterPingWatch(eq.IP, 0); //We add equipement to continuous ping
 	*/

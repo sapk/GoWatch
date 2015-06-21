@@ -1,11 +1,13 @@
 package watcher
 
 import (
-	"github.com/alouca/gosnmp"
 	"log"
 	"time"
+
+	"github.com/alouca/gosnmp"
 )
 
+//SNMPResponse hold all the information on a SNMPResponse
 type SNMPResponse struct {
 	IP     string
 	Result bool
@@ -15,6 +17,8 @@ type SNMPResponse struct {
 }
 
 //TODO monitor snmp trap
+
+//SNMPTest try to read a proprety by SNMP
 func SNMPTest(ip string, community string, timeout time.Duration) SNMPResponse {
 	start := time.Now()
 	s, err := gosnmp.NewGoSNMP(ip, community, gosnmp.Version2c, int64(timeout.Seconds()))

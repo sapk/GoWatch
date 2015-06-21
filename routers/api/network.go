@@ -25,3 +25,11 @@ func SNMPTest(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
 	community := ctx.Query("community")
 	ctx.JSON(200, network.SNMPTest(hostorip, community))
 }
+
+// ReverseDNS reverse DNS the ip
+func ReverseDNS(ctx *macaron.Context, auth *auth.Auth, sess session.Store) {
+	if err := auth.VerificationAuth(ctx, sess, []string{"api.network.reversedns"}); err != nil {
+		return
+	}
+	ctx.JSON(200, network.ReverseDNS(ctx.Req.URL.RawQuery))
+}

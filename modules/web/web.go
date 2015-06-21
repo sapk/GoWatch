@@ -23,10 +23,9 @@ import (
 )
 
 //Start init the web interface
-func Start(db *db.Db, watcher *watcher.Watcher, rrd *rrd.RRD) {
+func Start(watcher *watcher.Watcher, rrd *rrd.RRD) {
 
 	m := macaron.New()
-	m.Map(db)
 	m.Map(watcher)
 	m.Use(macaron.Logger())
 	m.Use(macaron.Gziper())
@@ -37,7 +36,7 @@ func Start(db *db.Db, watcher *watcher.Watcher, rrd *rrd.RRD) {
 	log.Println("Macaron initialised !")
 
 	m.Use(auth.Authentificator(auth.Options{
-		Provider: db,
+		Provider: db.Get(),
 	}))
 	log.Println("Auth initialised !")
 
@@ -71,11 +70,13 @@ func Start(db *db.Db, watcher *watcher.Watcher, rrd *rrd.RRD) {
 		m.Get("/equipements", auth.IsLogged, admin.Equipements)
 		m.Get("/equipement/add", auth.IsLogged, admin.EquipementAdd)
 		m.Post("/equipement/add", auth.IsLogged, admin.EquipementAddPost)
+		m.Get("/equipement/add_multiples", auth.IsLogged, admin.EquipementAddMultiples)
 		m.Get("/equipement/:id([0-9]+)/del", auth.IsLogged, admin.EquipementDel)
 	})
 
 	m.Group("/api", func() {
 		m.Get("/network/ping", auth.IsLogged, api.Ping)
+		m.Get("/network/reversedns", auth.IsLogged, api.ReverseDNS)
 		m.Get("/network/snmptest", auth.IsLogged, api.SNMPTest)
 		m.Get("/graph/equipement/:id([0-9]+)/:duration.png", auth.IsLogged, api.GraphPing)
 	})
