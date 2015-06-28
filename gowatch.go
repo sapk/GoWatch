@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/sapk/GoWatch/modules/rrd"
+	"github.com/sapk/GoWatch/modules/collector"
 	"github.com/sapk/GoWatch/modules/watcher"
 	"github.com/sapk/GoWatch/modules/web"
 )
@@ -18,8 +18,8 @@ func main() {
 	w := watcher.Init()
 	log.Println("Watcher initialised !")
 
-	r := rrd.Init()
-	log.Println("RRD initialised !")
+	collector.Init()
+	log.Println("Collector initialised !")
 
-	web.Start(w, r)
+	web.Start(w)
 }

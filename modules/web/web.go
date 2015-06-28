@@ -9,7 +9,6 @@ import (
 	//"golang.org/x/crypto/bcrypt"
 	"log"
 
-	"github.com/sapk/GoWatch/modules/rrd"
 	"github.com/sapk/GoWatch/modules/watcher"
 
 	"github.com/sapk/GoWatch/routers"
@@ -22,8 +21,9 @@ import (
 	"github.com/macaron-contrib/toolbox"
 )
 
+//TODO remove watcher dep
 //Start init the web interface
-func Start(watcher *watcher.Watcher, rrd *rrd.RRD) {
+func Start(watcher *watcher.Watcher) {
 
 	m := macaron.New()
 	m.Map(watcher)

@@ -170,11 +170,18 @@
               $(".menu").on('click', ".item>.icon.delete",function(e){
                 $(this).parent().remove();
               });
-        			$("form").on('submit', function(){
+        	  $("form").on('submit', function(){
                 $(this).find('#scan.animated.button.green').addClass('loading');
                 network=$("input[name='ip_range']").val().split('/');
                 console.log(network);
-                var net = new IPv4Network(new IPv4(network[0]),new Subnet("/"+network[1]));
+				try {
+				    var net = new IPv4Network(new IPv4(network[0]),new Subnet("/"+network[1]));
+				}
+				catch(err) {
+				    alert(JSON.stringify(err));
+					$(this).find('#scan.animated.button.green').removeClass('loading');
+					return false;
+				}
                 console.log(net);
                 console.log(net.network());
                 console.log(net.broadcast());

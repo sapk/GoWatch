@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/sapk/GoWatch/models/equipement"
-	"github.com/sapk/GoWatch/modules/rrd"
+	"github.com/sapk/GoWatch/modules/collector"
 	"github.com/sapk/GoWatch/modules/tools"
 
 	"golang.org/x/net/icmp"
@@ -83,7 +83,7 @@ func (cs *chanListPingRequest) has(c *PingRequest) bool {
 	return false
 }
 func (cs *chanListPingRequest) send(rep PingResponse) {
-	log.Println(len(*cs))
+	log.Println("Nb of chan to send : ", len(*cs))
 	for id, req := range *cs {
 		log.Println("Trying to send to one chan", rep)
 		if req != nil && !req.isClose {
@@ -138,8 +138,8 @@ func startWatchLongRunningPing() {
 				removeFromPingList(rep.IP)
 			} else {
 				if rep.Result == true {
-					eq.UpdateActivity() //TODO cache in order to not lock the db
-					rrd.AddPing(strconv.FormatUint(eq.ID(), 10), rep.Time)
+					eq.UpdateActivity()
+					collector.AddPing(strconv.FormatUint(eq.ID(), 10), rep.Time)
 				} else {
 					//Timeout
 				}
@@ -208,6 +208,7 @@ func AddToPingLongRunningList(ip string) {
 
 //removeFromPingList RemoveFromPingList
 func removeFromPingList(ip string) {
+	log.Println("Removing from PingToListen : ", ip)
 	pw.PingToListen.RLock()
 	if ping, ok := pw.PingToListen.m[ip]; ok {
 		for id := range ping.Ch {
@@ -266,11 +267,15 @@ func startLoopPing() {
 						log.Println("Skipping because a ping is already pending", ip)
 					}
 				} else {
+					clearPingIfNeeded(ip) //We do cleanup before every thing //TODO why it's needed ? timeout seems to append before because of latency before the send
 					//No cleaning in order to not block the map
-					log.Println("Skipping because it's not a continous ping or a ping is already pending or deleted", ip)
+					log.Println("Skipping because it's not a continous ping or a ping is already pending or deleted", ip, ping)
 					//					time.Sleep(500 * time.Millisecond) //TODO scale for the number waiting timelapse to not block the entire process
 				}
-				timetowait := (int64(rrd.Step*time.Second) / int64(len(pw.PingToListen.m)+1))
+				//TODO add a count of equipeement for ping continuous in order to not loop during ping scan
+				//timetowait := (int64(collector.Step) / int64(equipement.NbEquipements()+1))
+				timetowait := (int64(collector.Step) / int64(len(pw.PingToListen.m)+1))
+
 				//log.Println("Wainting :",time.Duration(timetowait))
 				time.Sleep(time.Duration(timetowait) + 5*time.Millisecond) //scale for the number waiting
 			}
@@ -351,7 +356,8 @@ func registerPingWatch(ip string, timeout time.Duration, ch *PingRequest) error 
 	//Si le timeout est supérieur à 0 le minimum on active le timeout
 	if timeout > 0 {
 		go func() {
-			time.Sleep(timeout)
+			time.Sleep(timeout + 100*time.Millisecond)
+			log.Println("Timeout trigger of ", timeout, " for ", ip, " search if clear is needed.")
 			clearPingIfNeeded(ip)
 		}()
 	}
@@ -371,5 +377,6 @@ func PingTest(ip string, timeout time.Duration) PingResponse {
 
 	ret := <-ping.ch
 	ping.isClose = true
+	//clearPingIfNeeded(ip) //TODO determine if needed
 	return ret
 }
