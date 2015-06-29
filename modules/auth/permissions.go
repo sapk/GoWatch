@@ -9,6 +9,7 @@ func initRbac() *gorbac.Rbac {
 		"open.equipement", /* Can see any equipement */
 		"open.dashboard",  /* Can home dashboard */
 		"api.graph.ping",  /* Can graph ping time */
+		"api.socket.ping", /* Can monitor ping */
 	}, nil)
 	rbac.Set("admin", []string{
 		"add.equipement",         /* Add equipement to monitor */

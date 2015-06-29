@@ -3,6 +3,7 @@ package web
 import (
 	"github.com/Unknwon/macaron"
 	"github.com/macaron-contrib/session"
+	"github.com/macaron-contrib/sockets"
 	_ "github.com/mattn/go-sqlite3" //used by orm
 	"github.com/sapk/GoWatch/modules/auth"
 	"github.com/sapk/GoWatch/modules/db"
@@ -78,7 +79,10 @@ func Start(watcher *watcher.Watcher) {
 		m.Get("/network/ping", auth.IsLogged, api.Ping)
 		m.Get("/network/reversedns", auth.IsLogged, api.ReverseDNS)
 		m.Get("/network/snmptest", auth.IsLogged, api.SNMPTest)
-		m.Get("/graph/equipement/:id([0-9]+)/:duration.png", auth.IsLogged, api.GraphPing)
+		m.Get("/graph/equipement/:id([0-9]+)/ping/:duration.png", auth.IsLogged, api.GraphPing)
+		m.Get("/graph/equipement/:id([0-9]+)/ping/:duration", auth.IsLogged, api.GraphPingData)
+		m.Get("/socket/equipement/:id([0-9]+)/ping", sockets.JSON(api.Message{}), api.PingSocket)
 	})
+
 	m.Run()
 }

@@ -57,8 +57,8 @@ type PingResponse struct {
 
 // PingRequest represent ip request
 type PingRequest struct {
-	isClose bool
-	ch      chan PingResponse
+	IsClose bool
+	Ch      chan PingResponse
 }
 
 var pw PingWatcher
@@ -86,8 +86,8 @@ func (cs *chanListPingRequest) send(rep PingResponse) {
 	log.Println("Nb of chan to send : ", len(*cs))
 	for id, req := range *cs {
 		log.Println("Trying to send to one chan", rep)
-		if req != nil && !req.isClose {
-			req.ch <- rep
+		if req != nil && !req.IsClose {
+			req.Ch <- rep
 		} else {
 			log.Println("One chan seem to be dead removing it !")
 			delete(*cs, id) //TODO make sure it take in accoutn in pw
@@ -125,7 +125,7 @@ func startWatchLongRunningPing() {
 	//TODO goroutine parsing pw.PingChannels
 	go func() {
 		for {
-			rep, ok := <-pw.PingChannels.ch
+			rep, ok := <-pw.PingChannels.Ch
 			if !ok {
 				log.Fatalln("The chan must has been reset") //Should not happen with the new implementation
 			}
@@ -200,7 +200,7 @@ func startPingWatcher() {
 
 //AddToPingLongRunningList AddToPingLongRunningList
 func AddToPingLongRunningList(ip string) {
-	err := registerPingWatch(ip, 0, &pw.PingChannels) //We add all equipement to continuous ping
+	err := RegisterPingWatch(ip, 0, &pw.PingChannels) //We add all equipement to continuous ping
 	if err != nil {
 		log.Println("error during registering long running ping", err)
 	}
@@ -325,8 +325,8 @@ func sendPing(ip string) int {
 	return seq
 }
 
-//registerPingWatch add to the watch list
-func registerPingWatch(ip string, timeout time.Duration, ch *PingRequest) error {
+//RegisterPingWatch add to the watch list
+func RegisterPingWatch(ip string, timeout time.Duration, ch *PingRequest) error {
 	log.Println("Adding ", ip, "to watch list")
 	//If ip is invali we do nothing except send a massaeg contian error
 	if ok, _ := regexp.MatchString(tools.ValidIPAddressRegex, ip); !ok {
@@ -368,15 +368,15 @@ func registerPingWatch(ip string, timeout time.Duration, ch *PingRequest) error 
 func PingTest(ip string, timeout time.Duration) PingResponse {
 	ping := PingRequest{false, make(chan PingResponse)}
 	//defer close(ping) //TODO think about it
-	err := registerPingWatch(ip, timeout, &ping)
+	err := RegisterPingWatch(ip, timeout, &ping)
 	sendPing(ip)
 
 	if err != nil {
 		return PingResponse{IP: ip, Result: false, Time: 0, Error: err.Error()}
 	}
 
-	ret := <-ping.ch
-	ping.isClose = true
+	ret := <-ping.Ch
+	ping.IsClose = true
 	//clearPingIfNeeded(ip) //TODO determine if needed
 	return ret
 }

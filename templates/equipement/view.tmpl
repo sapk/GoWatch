@@ -8,16 +8,108 @@
 	Eq Created : {{.equipement.Created}}<br>
 	Eq Updated : {{.equipement.Updated}}<br>
 	Eq LastActivity : {{.equipement.LastActivity}}<br>
-
-	<img id="graph-minute" src="/api/graph/equipement/{{.equipement.ID}}/minute.png" onload="reload('#graph-minute','{{.equipement.ID}}','minute',10*1000)" />
-	<img id="graph-hour" src="/api/graph/equipement/{{.equipement.ID}}/hour.png" onload="reload('#graph-hour','{{.equipement.ID}}','hour',10*1000*3)" />
-	<img id="graph-day" src="/api/graph/equipement/{{.equipement.ID}}/day.png" onload="reload('#graph-day','{{.equipement.ID}}','day',10*1000*6*60/10)" />
-	<img id="graph-week" src="/api/graph/equipement/{{.equipement.ID}}/week.png" onload="reload('#graph-week','{{.equipement.ID}}','week',10*1000*6*60*24/100)" />
-
+	<br>
+	<div id="ping" class="visualization"></div>
+	<br><br>
 </div>
+<script src="/lib/vis/vis.min.js"></script>
+<link href="/lib/vis/vis.min.css" rel="stylesheet" type="text/css" />
 <script>
-	function reload(el,id,type,time){
-		window.setTimeout("$('"+el+"').attr('src','/api/graph/equipement/"+id+"/"+type+".png?' + new Date().getTime())",time);
-	}
+	var TimeInterval = 5*1000; // delay in ms to request new data points
+/*
+	var items = [
+	    {x: '2014-06-11', y: 10},
+	    {x: '2014-06-12', y: 25},
+	    {x: '2014-06-13', y: 30},
+	    {x: '2014-06-14', y: 10},
+	    {x: '2014-06-15', y: 15},
+	    {x: '2014-06-16', y: 30}
+	];
+	
+	var dataset = new vis.DataSet(items);
+*/
+  var dataset = new vis.DataSet();
+
+  var options = {
+    start: vis.moment().add(-5, 'minutes'), // changed so its faster
+    end: vis.moment(),
+    dataAxis: {
+      left: {
+        range: {
+          min:-0, /*max: 3*5*1000*/
+        }
+      }
+    },
+    drawPoints: {
+      style: 'circle' // square, circle
+    },
+	interpolation: false,
+    shaded: {
+      orientation: 'bottom' // top, bottom
+    }
+  };
+
+  var graphPing = new vis.Graph2d($("#ping.visualization").get(0), dataset, options);
+	
+  var pingSocket = new WebSocket("ws://"+window.location.host+"/api/socket/equipement/{{.equipement.ID}}/ping");
+  pingSocket.onopen = function (event) {
+  	console.log("websocket ready", event); 
+  };
+  pingSocket.onmessage = function (event) {
+	//console.log(event.data);
+	var d =  JSON.parse(event.data)
+	console.log(d)
+	console.log(d.Rep.Time/1000/1000)
+	if(d.Rep.Result)
+		addDataPoint(vis.moment(),d.Rep.Time/1000/1000)
+  }
+
+  $.get("/api/graph/equipement/{{.equipement.ID}}/ping/minute", function(d){
+		console.log(d);
+		$.each(d, function( index, ping ) {
+		  //alert( index + ": " + value );
+			if(ping.Result)
+	  			addDataPoint(ping.At,ping.Time/1000/1000);
+			//TODO support timeout
+		});
+  },"json")
+  function renderStep() {
+    // move the window (you can think of different strategies).
+    var now = vis.moment();
+    var range = graphPing.getWindow();
+    var interval = range.end - range.start;
+        // continuously move the window
+        graphPing.setWindow(now - interval, now, {animation: false});
+        requestAnimationFrame(renderStep);
+  }
+  renderStep();
+
+  function addDataPoint(x,y) {
+    // add a new data point to the dataset
+    dataset.add({
+      x: x,
+      y: y, 
+    });
+	/*
+	// retrieve a filtered subset of the data (not last 1 minute)
+	var items = data.get({
+	  filter: function (item) {
+	    return item.group == 1;
+	  }
+	});
+	*/
+
+	/* TODO generate average 
+    // remove all data points which are no longer visible
+    var range = graphPing.getWindow();
+    var interval = range.end - range.start;
+    var oldIds = dataset.getIds({
+      filter: function (item) {
+        return item.x < range.start - interval;
+      }
+    });
+    dataset.remove(oldIds);
+	*/
+  }
 </script>
 {{template "base/footer" .}}

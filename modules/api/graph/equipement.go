@@ -7,7 +7,7 @@ import (
 	"github.com/sapk/GoWatch/modules/collector"
 )
 
-//EquipementPing execute a ping and return informations
+//EquipementPing send a image to the out buffer
 func EquipementPing(ID, duration string, out io.Writer) error {
 	now := time.Now()
 	switch duration {
@@ -21,4 +21,20 @@ func EquipementPing(ID, duration string, out io.Writer) error {
 		out.Write(collector.GraphPing(ID, "Weekly", now.Add(-time.Hour*24*7), now))
 	}
 	return nil
+}
+
+//EquipementPingData send ping in database
+func EquipementPingData(ID, duration string) []collector.Ping {
+	now := time.Now()
+	switch duration {
+	case "minute":
+		return collector.DataPing(ID, now.Add(-time.Minute*5), now)
+	case "hour":
+		return collector.DataPing(ID, now.Add(-time.Hour), now)
+	case "day":
+		return collector.DataPing(ID, now.Add(-time.Hour*24), now)
+	case "week":
+		return collector.DataPing(ID, now.Add(-time.Hour*24*7), now)
+	}
+	return []collector.Ping{}
 }
