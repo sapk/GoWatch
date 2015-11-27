@@ -15,3 +15,8 @@ script: go build -v
 notifications:
   email:
     - sapk@sapk.fr
+
+before_install:
+  - pip install codecov
+after_success:
+  - codecov
