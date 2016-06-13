@@ -25,7 +25,7 @@ func Get() *Db {
 func init() {
 	if !isInit {
 		log.Println("Initialisation of Database...")
-		orm.RegisterDriver("sqlite3", orm.DR_Sqlite)
+		orm.RegisterDriver("sqlite3", orm.DRSqlite)
 		//orm.RegisterDataBase("default", "sqlite3", "gowatch.db")
 		orm.RegisterDataBase("default", "sqlite3", "gowatch.db?cache=shared&mode=memory")
 		//orm.RegisterDataBase("default", "sqlite3", ":memory:")

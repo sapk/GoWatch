@@ -31,7 +31,7 @@ type Options struct {
 }
 type Auth struct {
 	db   *db.Db
-	rbac *gorbac.Rbac
+	rbac *gorbac.RBAC
 }
 
 func Authentificator(options ...Options) macaron.Handler {

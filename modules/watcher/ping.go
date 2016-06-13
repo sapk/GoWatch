@@ -17,7 +17,6 @@ import (
 	"github.com/sapk/GoWatch/modules/tools"
 
 	"golang.org/x/net/icmp"
-	"golang.org/x/net/internal/iana"
 	"golang.org/x/net/ipv4"
 )
 
@@ -64,6 +63,7 @@ type PingRequest struct {
 var pw PingWatcher
 
 const maxUniqePingTimeout = 15 * time.Second
+const ProtocolICMP = 1
 
 type chanListPingRequest map[int]*PingRequest
 
@@ -161,7 +161,7 @@ func startPingWatcher() {
 				log.Fatal(err)
 			}
 
-			rm, err := icmp.ParseMessage(iana.ProtocolICMP, rb[:n])
+			rm, err := icmp.ParseMessage(ProtocolICMP, rb[:n])
 			if err != nil {
 				log.Fatal(err)
 			}

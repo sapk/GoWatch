@@ -2,7 +2,7 @@ package auth
 
 import "github.com/mikespook/gorbac"
 
-func initRbac() *gorbac.Rbac {
+func initRbac() *gorbac.RBAC {
 	//Roles //TODO
 	rbac := gorbac.New()
 	rbac.Set("user", []string{
